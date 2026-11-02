@@ -9,11 +9,13 @@ Forza Fat Fish HUD 是一个 Windows 桌面 HUD 悬浮层：读取游戏通过 U
 
 本软件**完全开源、免费**：无付费功能、无广告、无账号、无数据上传，所有遥测数据只在本机处理。
 
-![游戏内 HUD](docs/images/hud-screenshot.png)
+![设置界面](docs/images/settings-telemetry.png)
 
 | 经典仪表 | SHIFT TREE | GHOST LADDER |
 |---|---|---|
 | ![经典仪表](docs/images/hud-classic.png) | ![SHIFT TREE](docs/images/hud-shift-tree.png) | ![GHOST LADDER](docs/images/hud-ghost.png) |
+
+![游戏内 HUD](docs/images/hud-screenshot.png)
 
 ## 功能
 
