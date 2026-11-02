@@ -1,0 +1,37 @@
+配置文件说明
+============
+
+路径: 主程序 ForzaFatFishHUD.exe 同目录的 config 文件夹内，
+      即 config\config.json（与"配置文件说明.txt"放在一起）
+      便携式存储，配置跟随程序目录走；整个文件夹拷到其他电脑，
+      配置一并带走。
+
+格式: UTF-8 JSON，首次在设置窗口点"保存"后生成，
+      保存时 config 文件夹不存在会自动创建；
+      无配置文件时程序按默认值运行（IP 127.0.0.1、端口 23333、热键 F3）
+
+字段:
+[
+  "TelemetryIp":                 遥测接收 IP（默认 127.0.0.1）
+  "TelemetryPort":               UDP 端口（默认 23333）
+  "HotkeyText":                  HUD 显隐热键（默认 F3）
+  "ShowPerformancePanel":        是否显示行驶仪表
+  "InstrumentStyle":             仪表样式：0=经典，1=GHOST LADDER，2=SHIFT TREE
+  "ShowSteeringGauge":           转向仪表开关（当前版本转向已停用，保留字段）
+  "ShowTirePanel":               是否显示轮胎与悬挂面板
+  "ShowPerfPanel":               是否显示 HUD 渲染资源占用面板
+  "BasicPanelBackgroundOpacity": 基础面板背景透明度（0-100，默认 70）
+  "HudRefreshRate":              刷新率：0=30 FPS，1=60 FPS，2=以游戏发包为准
+  "AlwaysShowHud":               true=始终显示；false=智能显示
+  "HudAspectRatio":              布局比例：0=16:9，1=16:10，2=21:9，3=32:9，4=48:9，5=自定义
+  "CustomAspectWidth":           自定义画面宽度（像素，默认 3440）
+  "CustomAspectHeight":          自定义画面高度（像素，默认 1440）
+  "Profile16By9" 等六套布局:     每套含 PerformanceLayout / FestivalLayout / ShiftTreeLayout /
+                                 SteeringLayout / TireLayout / PerfLayout
+                                 X、Y 为 0-1 归一化坐标，WidthRatio 为宽度占画面比例
+]
+
+注意:
+- 程序所在目录必须可写。请勿把程序放进 Program Files 等
+  受系统保护的目录，否则写入配置会被拦截
+- 手动修改保存后，重启程序生效

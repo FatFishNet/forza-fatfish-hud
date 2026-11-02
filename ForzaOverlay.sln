@@ -1,0 +1,27 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ForzaOverlay.Core", "src\ForzaOverlay.Core\ForzaOverlay.Core.csproj", "{E3C57C67-62B3-4827-BA1F-A2985D1C92AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ForzaOverlay.App", "src\ForzaOverlay.App\ForzaOverlay.App.csproj", "{BD314172-BF36-47E2-8F58-1BCEBB52D9A7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E3C57C67-62B3-4827-BA1F-A2985D1C92AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3C57C67-62B3-4827-BA1F-A2985D1C92AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3C57C67-62B3-4827-BA1F-A2985D1C92AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3C57C67-62B3-4827-BA1F-A2985D1C92AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD314172-BF36-47E2-8F58-1BCEBB52D9A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD314172-BF36-47E2-8F58-1BCEBB52D9A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD314172-BF36-47E2-8F58-1BCEBB52D9A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD314172-BF36-47E2-8F58-1BCEBB52D9A7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
