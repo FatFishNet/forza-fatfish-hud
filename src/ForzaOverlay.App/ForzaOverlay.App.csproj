@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>ForzaOverlay.App</RootNamespace>
+    <AssemblyName>ForzaFatFishHUD</AssemblyName>
+    <Product>Forza Fat Fish HUD</Product>
+    <AssemblyTitle>Forza Fat Fish HUD</AssemblyTitle>
+    <Version>1.1.2</Version>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <UseWPF>true</UseWPF>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationIcon>Assets\Images\app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NHotkey.Wpf" Version="4.0.0" />
+    <PackageReference Include="Vortice.Direct2D1" Version="3.8.3" />
+    <PackageReference Include="Vortice.Direct3D11" Version="3.8.3" />
+    <PackageReference Include="Vortice.DirectComposition" Version="3.8.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Assets\Fonts\D-DIN-Bold.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Fonts\LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Images\app.ico" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Images\whale-maid.jpg" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Images\whale-maid-full.jpg" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Sounds\AE86windchime.mp3" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ForzaOverlay.Core\ForzaOverlay.Core.csproj" />
+  </ItemGroup>
+
+</Project>
