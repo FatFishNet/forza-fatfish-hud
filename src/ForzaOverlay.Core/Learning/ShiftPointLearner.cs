@@ -175,8 +175,17 @@ public sealed class ShiftPointLearner
     {
         double max = packet.EngineMaxRpm > 1 ? packet.EngineMaxRpm : 8000;
         (double cut, bool learned) = GetCutRpmInfo(packet);
+
         if (!learned)
         {
+            // 自动挡通常踩不到断油：用学到的升挡点中位数作为红区依据。
+            // 红区放在换挡点之前一点，换挡提示灯再用换挡点本身，两者不会同时亮。
+            double? shiftRpm = GetMedianShiftRpm(packet);
+            if (shiftRpm is double autoShift && autoShift > 0)
+            {
+                return Math.Clamp(autoShift * 0.95 / max, 0.50, 0.98);
+            }
+
             return FallbackRedlineRatio;
         }
 
