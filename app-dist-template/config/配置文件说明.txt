@@ -29,6 +29,14 @@
   "Profile16By9" 等六套布局:     每套含 PerformanceLayout / FestivalLayout / ShiftTreeLayout /
                                  SteeringLayout / TireLayout / PerfLayout
                                  X、Y 为 0-1 归一化坐标，WidthRatio 为宽度占画面比例
+  "EnableRedlineCalibration":    红区校正开关（默认 true）
+  "ShiftHintStyle":              换挡提示样式：0=关闭，2=4灯提示
+  "EnableOverspeedSound":        超速提示音开关
+  "OverspeedSpeedKmh":           超速触发时速（km/h）
+  "OverspeedSoundCount":         播放次数：3 / 5 / 10，0=一直响
+  "OverspeedSoundDelayMs":       相邻两次播放的延迟（100~500 毫秒）
+  "OverspeedSoundVolume":        提示音音量（0~100）
+  "OverspeedSoundPath":          提示音文件路径（仅支持 MP3）
 ]
 
 注意:

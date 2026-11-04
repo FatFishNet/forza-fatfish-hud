@@ -13,4 +13,6 @@ public sealed class HudLayoutProfile
     public HudModuleLayout TireLayout { get; set; } = HudLayoutDefaults.TireDefault();
 
     public HudModuleLayout PerfLayout { get; set; } = HudLayoutDefaults.PerfDefault();
+
+    public HudModuleLayout ShiftHintRgb3Layout { get; set; } = HudLayoutDefaults.ShiftHintRgb3Default();
 }

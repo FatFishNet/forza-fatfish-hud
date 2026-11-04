@@ -20,6 +20,9 @@ public static class HudLayoutDefaults
     public const double ShiftTreeWidth = 820;
     public const double ShiftTreeHeight = 320;
 
+    public const double ShiftHintWidth = 120;
+    public const double ShiftHintHeight = 40;
+
     public const double MinWidthRatio = 0.03;
     public const double MaxWidthRatio = 1.0;
 
@@ -69,5 +72,10 @@ public static class HudLayoutDefaults
     public static HudModuleLayout PerfDefault()
     {
         return new HudModuleLayout { X = 0.8564, Y = 0.3932, WidthRatio = 0.1383 };
+    }
+
+    public static HudModuleLayout ShiftHintRgb3Default()
+    {
+        return new HudModuleLayout { X = 0.3600, Y = 0.2600, WidthRatio = 0.4500 };
     }
 }

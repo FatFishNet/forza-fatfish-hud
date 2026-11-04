@@ -177,6 +177,10 @@ dotnet build .\ForzaOverlay.sln -v minimal -m:1
 
 - **SHA256 校验**：更新下载完成后校验 Release 附带的 `.sha256` 文件，防止下载被篡改（在 `UpdateService.DownloadAsync` 之后校验）
 - **「自动检查更新」开关**：设置项 `AutoCheckUpdates`（当前固定启动检查一次）
-- **README 截图**：`docs/images/hud-screenshot.png` 占位待补
+- **README 截图**：`docs/images/hud-screenshot.png` 占位待补（已完成，保留记录）
 - **GitHub Release v1.0.0 发布后实测自动更新流程**
+- **配置保护**：更新脚本解压时排除 `config/` 目录（当前靠「发布包不含 config.json」的约定，不够稳）
+- **配置文件版本与迁移**：`config.json` 加 `ConfigVersion`，加载时按版本迁移旧字段、补默认值；重命名/结构变动时不丢用户设置
+- **升级前备份**：更新脚本先把 `config.json` 复制为 `config.json.bak`，迁移失败可回滚
+- **红线区学习**：自动挡 WOT 升挡 RPM 学习（按档位/按车指纹缓存），学习后替代固定红线比例；需要「车辆/调校指纹」+ 样本过滤（WOT、直线、无打滑）+ 最高档兜底
 
