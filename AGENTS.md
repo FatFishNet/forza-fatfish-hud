@@ -183,4 +183,5 @@ dotnet build .\ForzaOverlay.sln -v minimal -m:1
 - **配置文件版本与迁移**：`config.json` 加 `ConfigVersion`，加载时按版本迁移旧字段、补默认值；重命名/结构变动时不丢用户设置
 - **升级前备份**：更新脚本先把 `config.json` 复制为 `config.json.bak`，迁移失败可回滚
 - **红线区学习**：自动挡 WOT 升挡 RPM 学习（按档位/按车指纹缓存），学习后替代固定红线比例；需要「车辆/调校指纹」+ 样本过滤（WOT、直线、无打滑）+ 最高档兜底
+- **更新下载源（国内分流，需免费方案）**：GitHub Releases 国内下载很慢；优先免费的 **Gitee Release 镜像**（发版时同步 zip），更新器支持多源回退（镜像优先 → GitHub 兜底），全部失败才提示手动下载。备选：ghproxy 类加速（免费但不稳）、Cloudflare R2 / Vercel（免费额度，国内速度一般）
 

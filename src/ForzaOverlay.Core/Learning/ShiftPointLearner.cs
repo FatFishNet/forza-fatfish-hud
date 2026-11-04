@@ -142,6 +142,13 @@ public sealed class ShiftPointLearner
             }
 
             ShiftPointProfile profile = GetOrCreateProfile(key, packet.EngineMaxRpm);
+
+            // 最高档位每帧记录（不受 WOT/断油采样条件限制），换挡提示用它判断是否最高档。
+            if (packet.GearNumber > profile.MaxGearSeen)
+            {
+                profile.MaxGearSeen = packet.GearNumber;
+            }
+
             ObserveCut(packet, tickMs, profile);
             ObserveUpshift(packet, profile);
 
@@ -324,11 +331,6 @@ public sealed class ShiftPointLearner
         if (rpm > profile.MaxWotRpm)
         {
             profile.MaxWotRpm = rpm;
-        }
-
-        if (packet.GearNumber > profile.MaxGearSeen)
-        {
-            profile.MaxGearSeen = packet.GearNumber;
         }
 
         while (_cutWindow.Count > 0 && tickMs - _cutWindow.Peek().Tick > CutWindowMs)

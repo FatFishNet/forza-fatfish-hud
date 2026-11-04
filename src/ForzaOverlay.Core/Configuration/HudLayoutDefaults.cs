@@ -76,6 +76,6 @@ public static class HudLayoutDefaults
 
     public static HudModuleLayout ShiftHintRgb3Default()
     {
-        return new HudModuleLayout { X = 0.3600, Y = 0.2600, WidthRatio = 0.4500 };
+        return new HudModuleLayout { X = 0.4242, Y = 0.1821, WidthRatio = 0.1524 };
     }
 }
