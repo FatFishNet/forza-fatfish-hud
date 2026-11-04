@@ -14,6 +14,9 @@ public sealed class ShiftPointLearner
     /// <summary>学不到断油点时使用的红区起点比例（占最大转速）。</summary>
     public const double FallbackRedlineRatio = 0.80;
 
+    /// <summary>自动挡（无断油数据）时使用的红区起点比例，接近游戏红区（约 90%）。</summary>
+    public const double AutoRedlineRatio = 0.90;
+
     /// <summary>红区宽度 = (最大转速 - 断油点) × 系数；断油点离上限远的车（老爷车）红区更宽。</summary>
     public const double RedlineWidthFactorHigh = 1.7;
 
@@ -42,13 +45,13 @@ public sealed class ShiftPointLearner
     private const int SteerHoldLimitMs = 500;
     private const int CutRelearnDeviationCount = 5;
     private const double CutPlatformDriftRpm = 40.0;
-    private const int CutWindowMs = 1500;
+    private const int CutWindowMs = 1200;
     private const int CutMinSamples = 20;
     private const int CutMinRises = 2;
     private const int CutMinFalls = 3;
     private const double ShiftSamplingThrottle = 0.80;
-    private const double ShiftSamplingSteer = 0.20;
-    private const double ShiftSamplingSlip = 0.6;
+    private const double ShiftSamplingSteer = 0.35;
+    private const double ShiftSamplingSlip = 1.5;
     private const int MaxCutSamples = 10;
     private const int MaxShiftSamplesPerGear = 5;
     private const int MaxShiftSamples = 60;
@@ -113,7 +116,11 @@ public sealed class ShiftPointLearner
     {
         if (!packet.RaceOn || packet.EngineMaxRpm <= 1f)
         {
-            _lastGear = packet.GearNumber;
+            if (packet.GearNumber is >= 1 and <= 10)
+            {
+                _lastGear = packet.GearNumber;
+            }
+
             return;
         }
 
@@ -159,11 +166,21 @@ public sealed class ShiftPointLearner
             }
         }
 
-        _lastGear = packet.GearNumber;
-        _lastRpm = packet.CurrentEngineRpm;
-        _lastThrottle = packet.ThrottleNormalized;
-        _lastSteer = packet.SteerNormalized;
-        _lastSlip = AverageSlip(packet);
+        // 只记录有效前进档（1~10）；0/-1（空档/倒挡）和 11（换挡中）都不算。
+        int gear = packet.GearNumber;
+        if (gear >= 1 && gear <= 10)
+        {
+            if (gear != _lastGear)
+            {
+                Diagnostics.Write($"[档位] {_lastGear} -> {gear} 转速={packet.CurrentEngineRpm:F0} 油门={packet.ThrottleNormalized:F2} 滑移={AverageSlip(packet):F2}");
+            }
+
+            _lastGear = gear;
+            _lastRpm = packet.CurrentEngineRpm;
+            _lastThrottle = packet.ThrottleNormalized;
+            _lastSteer = packet.SteerNormalized;
+            _lastSlip = AverageSlip(packet);
+        }
     }
 
     /// <summary>红区起点占最大转速的比例，供绘制红线区起点。</summary>
@@ -178,15 +195,14 @@ public sealed class ShiftPointLearner
 
         if (!learned)
         {
-            // 自动挡通常踩不到断油：用学到的升挡点中位数作为红区依据。
-            // 红区放在换挡点之前一点，换挡提示灯再用换挡点本身，两者不会同时亮。
+            // 自动挡：游戏在自动换挡点换挡，换挡点之后才是红区。
             double? shiftRpm = GetMedianShiftRpm(packet);
             if (shiftRpm is double autoShift && autoShift > 0)
             {
-                return Math.Clamp(autoShift * 0.95 / max, 0.50, 0.98);
+                return Math.Clamp(autoShift / max, 0.50, 0.98);
             }
 
-            return FallbackRedlineRatio;
+            return AutoRedlineRatio;
         }
 
         double margin = Math.Max(0, max - cut);
@@ -204,6 +220,17 @@ public sealed class ShiftPointLearner
         return (
             Math.Clamp(cut * WarnFactor / max, 0.30, 1.0),
             Math.Clamp(cut * ShiftFactor / max, 0.30, 1.0));
+    }
+
+    /// <summary>该车已见最高的 WOT 转速；自动挡用它作为断油估计。</summary>
+    public double GetMaxWotRpm(in ForzaDataPacket packet)
+    {
+        lock (_gate)
+        {
+            return _profiles.TryGetValue(BuildKey(packet), out ShiftPointProfile? profile)
+                ? profile.MaxWotRpm
+                : 0;
+        }
     }
 
     /// <summary>当前车辆是否已学到断油点。</summary>
@@ -314,7 +341,7 @@ public sealed class ShiftPointLearner
         double rpm = packet.CurrentEngineRpm;
 
         if (!wot
-            || packet.GearNumber < 1
+            || packet.GearNumber is < 1 or > 10
             || packet.ClutchNormalized > 0.5
             || rpm < maxRpm * CutMinRpmRatio)
         {
@@ -487,6 +514,13 @@ public sealed class ShiftPointLearner
     private void ObserveUpshift(in ForzaDataPacket packet, ShiftPointProfile profile)
     {
         int gear = packet.GearNumber;
+
+        // 换挡瞬间可能出现 0/-1（空档/倒挡）或 11（换挡中），都不算升挡。
+        if (gear < 1 || gear > 10)
+        {
+            return;
+        }
+
         bool upshift = _lastGear >= 1 && gear == _lastGear + 1;
         if (!upshift)
         {
@@ -499,9 +533,12 @@ public sealed class ShiftPointLearner
             && _lastRpm > 0;
         if (!cleanSample)
         {
+            Diagnostics.Write(
+                $"[换挡学习] 跳过 {_lastGear}->{gear}: 油门={_lastThrottle:F2} 转向={_lastSteer:F2} 滑移={_lastSlip:F2} 转速={_lastRpm:F0}");
             return;
         }
 
+        Diagnostics.Write($"[换挡学习] 记录 {_lastGear}->{gear}: 转速={_lastRpm:F0}");
         AddShiftSample(profile, _lastGear, _lastRpm);
     }
 
