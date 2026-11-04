@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "project":  "ForzaOverlay",
-    "snapshotAt":  "2026-11-05T00:18:20+08:00",
+    "snapshotAt":  "2026-11-05T00:36:19+08:00",
     "trackedRoots":  [
                          "src/",
                          "app-dist-template/",
@@ -152,7 +152,7 @@
                       "path":  "src/ForzaOverlay.App/ForzaOverlay.App.csproj",
                       "lines":  39,
                       "bytes":  1746,
-                      "sha256":  "8d32b13dcd967ecd00bd1b17b2a8f530a2a8583195c336aa5a38eaca3d05cbb3"
+                      "sha256":  "877e53c2c70e37f122cdc75320ca36c7232767866682f0116fc300c2824971bc"
                   },
                   {
                       "path":  "src/ForzaOverlay.App/Rendering/GpuOverlayWindow.cs",
@@ -162,9 +162,9 @@
                   },
                   {
                       "path":  "src/ForzaOverlay.App/Rendering/ShiftTreeScene.cs",
-                      "lines":  1480,
-                      "bytes":  61218,
-                      "sha256":  "4897697bf3d0006cb20859b88d79f9e4e3a107fb6e9a300558a8372e0b967e2d"
+                      "lines":  1473,
+                      "bytes":  61004,
+                      "sha256":  "3e6027aba1ef1b0224e0950eac43723cad0157960a67f029a7593f8c79f7d926"
                   },
                   {
                       "path":  "src/ForzaOverlay.App/Services/AppServices.cs",
@@ -296,7 +296,7 @@
                       "path":  "src/ForzaOverlay.Core/Configuration/HudLayoutDefaults.cs",
                       "lines":  81,
                       "bytes":  2400,
-                      "sha256":  "bdb14096e6eea51787c70fbf66f3d7538d57413251f8f986c0053a03ce1090a3"
+                      "sha256":  "f590fbdb0e60c6f02e0d6fa80688491b63c0dda0759e6213272aad893932654d"
                   },
                   {
                       "path":  "src/ForzaOverlay.Core/Configuration/HudLayoutProfile.cs",
@@ -336,9 +336,9 @@
                   },
                   {
                       "path":  "src/ForzaOverlay.Core/Learning/ShiftPointLearner.cs",
-                      "lines":  581,
-                      "bytes":  20042,
-                      "sha256":  "2101a1cd7224d1da1bf3e446c576c9278adf5f0b391f5f30cc29e0d3e53770da"
+                      "lines":  583,
+                      "bytes":  20185,
+                      "sha256":  "b4a8733560f43db5eb76e1ffc4f710989be938859acfa5476edbc83fc5b9ce78"
                   },
                   {
                       "path":  "src/ForzaOverlay.Core/Monitoring/ForzaGameKind.cs",

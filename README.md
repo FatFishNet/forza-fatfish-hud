@@ -34,6 +34,12 @@ Forza Fat Fish HUD 是一个 Windows 桌面 HUD 悬浮层：读取游戏通过 U
 - **全局快捷键**：一键显示/隐藏 HUD
 - **智能显示**：仅在驾驶、游戏处于前台时显示
 
+### 1.1.0 新功能
+
+| 红区校正 / 换挡提示 | 超速提示音 |
+|---|---|
+| ![红区校正与换挡提示](docs/images/features-redline-shift.png) | ![超速提示音](docs/images/features-overspeed.png) |
+
 ## 系统要求
 
 - Windows 10 1709+ / Windows 11（64 位）
