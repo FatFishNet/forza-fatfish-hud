@@ -38,10 +38,13 @@ src/ForzaOverlay.App/          WPF 界面层
   Ui/UpdateWindow.xaml(.cs)    更新说明与下载窗口
   Ui/HudLayoutWindow.xaml(.cs) 布局编辑器
   Ui/HudModuleCatalog.cs       模块清单（名称 / 基准尺寸 / 显隐条件）
-  Services/                    UDP 监听、全局热键、进程监视、权限检测、更新检查/应用
+  Services/                    UDP 监听、全局热键、进程监视、权限检测、更新检查/应用、超速提示音
+    OverspeedSoundPlayer.cs    超速提示音（WPF MediaPlayer，按音频时长调度）
   Assets/Fonts/                内置字体 D-DIN（OFL 授权）
   Assets/Images/               图标与角色形象素材
+  Assets/Sounds/               提示音素材（AE86windchime.mp3，仅支持 MP3）
 src/ForzaOverlay.Core/         无界面逻辑：配置、遥测解析、网络、监控、视觉规则
+  Learning/ShiftPointLearner.cs 红区/换挡点学习（断油检测、升挡采样、按车指纹缓存）
 docs/                          开发规范与项目索引
 app-dist-template/             发布时复制进发行包的模板
 temp/                          临时素材（设计稿、字体源文件），不入库
@@ -64,6 +67,9 @@ dotnet build .\ForzaOverlay.sln -v minimal -m:1
 - **编译前先结束运行中的 `ForzaFatFishHUD`**，否则 `MSB3021/MSB3027` 文件占用
 - 编译完成后必须报告：`已编译：N 警告 M 错误`
 - 不允许留下警告（`0 警告` 是交付标准）
+- `Publish.bat` 输出到 `..\ForzaFatFishHUD-dist`：**覆盖同名文件，但不删除**目录里多出来的东西
+  - 用户的 `config\`、`data\`（学习数据）、`logs\` 会保留；发布包里不含 `config.json`
+  - 每次生成 `..\ForzaFatFishHUD-releases\ForzaFatFishHUD-v{版本}-win64.zip`
 
 ## 4. 工作流约定（用户明确要求，必须遵守）
 
@@ -115,7 +121,11 @@ dotnet build .\ForzaOverlay.sln -v minimal -m:1
 
 - 遥测包固定 324 字节，`IsRaceOn` 在偏移 0，`Accel/Brake/Clutch/HandBrake` 在 315–318，`Gear` 在 319
 - 车库 / 车展里 `IsRaceOn` 仍为 1，且可以轰油门，因此**无法用遥测数据区分"车库"和"停车"**
-- 档位只接受 `-1 ~ 10`，超出范围的值视为换挡瞬间的脏数据，直接丢弃
+- 档位有效值只有 **1~10**；`0`/`-1` 是空档/倒挡，**`11` 是换挡中（换挡瞬间）**
+  - 断油检测、升挡采样、最高档判断都必须只接受 1~10，否则换挡慢的车会永久学不到（踩过的坑）
+- 红区学习数据存程序目录 `data\shift-learning.json`：`CutValues`（断油样本→取中位数）、`MaxWotRpm`、`MaxGearSeen`、`Shifts`（升挡点）
+- 红区算法：有断油 → `Max − (Max−断油) × k`（断油/Max < 0.88 用 k=1.9，否则 1.7）；无断油（自动挡）→ 自动换挡点
+- 换挡提示「4灯」：绿常亮 → 黄（红区前 10%）→ 红（红区起点）→ 红（最佳换挡点 = 断油 − (Max−断油)×0.28）
 - 数值格式化约定：**截断**（`MidpointRounding.ToZero`），不是四舍五入——用户明确要求保持现状
 
 ## 9. 不要做的事
@@ -125,6 +135,8 @@ dotnet build .\ForzaOverlay.sln -v minimal -m:1
 - 不要为数字加固定槽位之外的额外间距计算（会引入抖动）
 - 不要打包 Windows 自带字体（Bahnschrift / Consolas），只能引用字体名
 - 不要把 `temp/` 里的设计稿当作最终规格，以 `docs/` 和代码为准
+- **新增 .gitignore 规则后要检查是否误伤源码**：`*.app` 曾把 `ForzaOverlay.App.csproj` 忽略掉，
+  导致 App 项目文件一个月没进仓库（`git status` 干净是假象，用 `git ls-files` 确认关键文件）
 
 ---
 
@@ -177,11 +189,8 @@ dotnet build .\ForzaOverlay.sln -v minimal -m:1
 
 - **SHA256 校验**：更新下载完成后校验 Release 附带的 `.sha256` 文件，防止下载被篡改（在 `UpdateService.DownloadAsync` 之后校验）
 - **「自动检查更新」开关**：设置项 `AutoCheckUpdates`（当前固定启动检查一次）
-- **README 截图**：`docs/images/hud-screenshot.png` 占位待补（已完成，保留记录）
-- **GitHub Release v1.0.0 发布后实测自动更新流程**
 - **配置保护**：更新脚本解压时排除 `config/` 目录（当前靠「发布包不含 config.json」的约定，不够稳）
 - **配置文件版本与迁移**：`config.json` 加 `ConfigVersion`，加载时按版本迁移旧字段、补默认值；重命名/结构变动时不丢用户设置
 - **升级前备份**：更新脚本先把 `config.json` 复制为 `config.json.bak`，迁移失败可回滚
-- **红线区学习**：自动挡 WOT 升挡 RPM 学习（按档位/按车指纹缓存），学习后替代固定红线比例；需要「车辆/调校指纹」+ 样本过滤（WOT、直线、无打滑）+ 最高档兜底
 - **更新下载源（国内分流，需免费方案）**：GitHub Releases 国内下载很慢；优先免费的 **Gitee Release 镜像**（发版时同步 zip），更新器支持多源回退（镜像优先 → GitHub 兜底），全部失败才提示手动下载。备选：ghproxy 类加速（免费但不稳）、Cloudflare R2 / Vercel（免费额度，国内速度一般）
 
