@@ -20,11 +20,12 @@ public sealed class AppSettings
     /// <summary>换挡提示样式：关闭 / VTEC 模拟灯 / 3 色圆灯；需先开启红区校正。</summary>
     public HudShiftHintStyle ShiftHintStyle { get; set; }
 
-    public bool ShowSteeringGauge { get; set; } = true;
-
     public bool ShowTirePanel { get; set; } = true;
 
     public bool ShowPerfPanel { get; set; }
+
+    /// <summary>性能日志：每秒记录帧耗时 / GC / CPU/GPU，仅用于卡顿排查，默认关闭。</summary>
+    public bool PerfLogEnabled { get; set; }
 
     /// <summary>超速提示音：时速达到设定值时播放提示音。</summary>
     public bool EnableOverspeedSound { get; set; }
@@ -44,7 +45,7 @@ public sealed class AppSettings
     /// <summary>提示音文件路径（相对程序目录或绝对路径，允许中文名）。</summary>
     public string OverspeedSoundPath { get; set; } = "Assets\\Sounds\\AE86windchime.mp3";
 
-    public int BasicPanelBackgroundOpacity { get; set; } = 70;
+    public int BasicPanelBackgroundOpacity { get; set; } = 30;
 
     public int HudRefreshRate { get; set; } = 1;
 

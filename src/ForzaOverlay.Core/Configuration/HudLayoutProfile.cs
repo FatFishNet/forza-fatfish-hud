@@ -8,7 +8,7 @@ public sealed class HudLayoutProfile
 
     public HudModuleLayout ShiftTreeLayout { get; set; } = HudLayoutDefaults.ShiftTreeDefault();
 
-    public HudModuleLayout SteeringLayout { get; set; } = HudLayoutDefaults.SteeringDefault();
+    public HudModuleLayout Nfs19Layout { get; set; } = HudLayoutDefaults.Nfs19Default();
 
     public HudModuleLayout TireLayout { get; set; } = HudLayoutDefaults.TireDefault();
 

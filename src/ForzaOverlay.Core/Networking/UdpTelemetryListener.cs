@@ -107,6 +107,7 @@ public sealed class UdpTelemetryListener : IDisposable
                 if (TelemetryPacketParser.TryParse(result.Buffer, Environment.TickCount64, out TelemetryFrame frame))
                 {
                     Interlocked.Increment(ref _packetsReceived);
+                    ForzaOverlay.Core.Logging.PerfRecorder.OnPacket(frame.ReceivedTickMs);
                     _channel.Writer.TryWrite(frame);
                 }
             }

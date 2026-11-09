@@ -65,6 +65,7 @@ public sealed class GameProcessMonitor : IDisposable
             return;
         }
 
+        long pollStart = Stopwatch.GetTimestamp();
         try
         {
             bool isGameRunning = CheckGameRunning();
@@ -88,6 +89,7 @@ public sealed class GameProcessMonitor : IDisposable
         }
         finally
         {
+            PerfRecorder.ReportScan((Stopwatch.GetTimestamp() - pollStart) * 1000.0 / Stopwatch.Frequency);
             Interlocked.Exchange(ref _polling, 0);
         }
     }

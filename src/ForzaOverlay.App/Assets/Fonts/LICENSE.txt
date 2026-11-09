@@ -1,0 +1,9 @@
+D-DIN
+=====
+
+Source : https://github.com/datto/d-din
+Files  : Assets/Fonts/D-DIN-Bold.ttf
+License: SIL Open Font License 1.1
+
+This bundled font is distributed under the SIL Open Font License, which permits
+embedding and redistribution as part of this application.
