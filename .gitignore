@@ -180,3 +180,6 @@
 # .NET build output
 **/bin/
 **/obj/
+
+# Agent 工作说明（用户明确要求不纳入仓库）
+AGENTS.md
