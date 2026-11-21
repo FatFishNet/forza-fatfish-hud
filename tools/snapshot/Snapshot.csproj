@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    快照工具：把 GPU HUD 渲染到离屏位图并存成 PNG，不需要启动游戏。
+    故意不加入 ForzaOverlay.sln，主程序的编译与发布完全不受影响。
+    单独运行：dotnet run 指定本 csproj，再给 style 与 output 参数。
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>ForzaOverlay.Tools.Snapshot</RootNamespace>
+    <AssemblyName>snapshot</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ForzaOverlay.App\ForzaOverlay.App.csproj" />
+  </ItemGroup>
+
+</Project>

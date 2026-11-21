@@ -2,6 +2,10 @@
 .claude
 .gemini
 .opencode
+# DSH 技能开关状态、本机会话交接单、记忆流水脚本：都是本机绑定，对 clone 仓库的人无意义
+.dsh/
+.dsh-handoff/
+.dsh-fatfishdream-memory/
 
 # IDE and Editors
 **/.idea/
@@ -180,6 +184,3 @@
 # .NET build output
 **/bin/
 **/obj/
-
-# Agent 工作说明（用户明确要求不纳入仓库）
-AGENTS.md
