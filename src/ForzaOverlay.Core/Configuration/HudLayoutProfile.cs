@@ -10,6 +10,10 @@ public sealed class HudLayoutProfile
 
     public HudModuleLayout Nfs19Layout { get; set; } = HudLayoutDefaults.Nfs19Default();
 
+    public HudModuleLayout AltezzaLayout { get; set; } = HudLayoutDefaults.AltezzaDefault();
+
+    public HudModuleLayout EsLayout { get; set; } = HudLayoutDefaults.EsDefault();
+
     public HudModuleLayout TireLayout { get; set; } = HudLayoutDefaults.TireDefault();
 
     public HudModuleLayout PerfLayout { get; set; } = HudLayoutDefaults.PerfDefault();

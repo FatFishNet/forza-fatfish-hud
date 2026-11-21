@@ -7,7 +7,7 @@
     <AssemblyName>ForzaFatFishHUD</AssemblyName>
     <Product>Forza Fat Fish HUD</Product>
     <AssemblyTitle>Forza Fat Fish HUD</AssemblyTitle>
-    <Version>1.1.2</Version>
+    <Version>1.2.0</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -34,6 +34,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ForzaOverlay.Core\ForzaOverlay.Core.csproj" />
+  </ItemGroup>
+
+  <!--
+    只给 tools\snapshot 这个离屏快照工具开放 internal 成员
+    （AltezzaScene / Nfs19Scene 都是 internal）。
+    这样做是为了在不扩大主程序公开 API 的前提下，让工具能调用真实绘制代码，
+    而不是复制一份 —— 复制出来的和真实绘制会不同步，快照就失去意义。
+  -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="snapshot" />
   </ItemGroup>
 
 </Project>

@@ -17,8 +17,8 @@ namespace ForzaOverlay.App.Rendering;
 /// <summary>
 /// GPU HUD 场景调度器：按布局与开关把各面板分派给对应的绘制方。
 /// 经典仪表、轮胎、资源占用、换挡提示的绘制仍在本文内；
-/// GHOST / SHIFT TREE / 仿NFS19 已拆到独立文件（<see cref="GhostPanel"/>、
-/// <see cref="ShiftTreePanel"/>、<see cref="Nfs19Scene"/>）。
+/// GHOST / SHIFT TREE / 仿NFS19 / 咬地鲨 已拆到独立文件（<see cref="GhostPanel"/>、
+/// <see cref="ShiftTreePanel"/>、<see cref="Nfs19Scene"/>、<see cref="AltezzaScene"/>）。
 /// </summary>
 public sealed class HudScene : IDisposable
 {
@@ -51,6 +51,8 @@ public sealed class HudScene : IDisposable
     private readonly IDWriteTextFormat? _hintTitleFormat;
     private readonly IDWriteTextFormat? _hintSmallFormat;
     private Nfs19Scene? _nfs19Scene;
+    private AltezzaScene? _altezzaScene;
+    private EsScene? _esScene;
 
     /// <summary>
     /// 最后一次有效的最大转速。游戏在菜单 / 车库 / 暂停时不发该值（为 0），
@@ -132,6 +134,8 @@ public sealed class HudScene : IDisposable
             _shiftTreePanel = new ShiftTreePanel(_dwrite);
             _ghostPanel = new GhostPanel(_dwrite, _customFonts, _customFamilyName);
             _nfs19Scene = new Nfs19Scene(_dwrite);
+            _altezzaScene = new AltezzaScene(_dwrite);
+        _esScene = new EsScene(_dwrite);
         }
         catch (Exception ex)
         {
@@ -295,6 +299,39 @@ public sealed class HudScene : IDisposable
                 _hasPacket,
                 _shiftLearner,
                 EffectiveMaxRpm(),
+                viewportX,
+                viewportY,
+                viewportWidth,
+                viewportHeight);
+        }
+
+        if (settings.ShowPerformancePanel && settings.InstrumentStyle == HudInstrumentStyle.Altezza)
+        {
+            _altezzaScene?.Draw(
+                target,
+                settings.ActiveLayout.AltezzaLayout,
+                _packet,
+                _hasPacket,
+                _shiftLearner,
+                EffectiveMaxRpm(),
+                _boostPresence.HasBoost,
+                settings.EnableRedlineCalibration,
+                viewportX,
+                viewportY,
+                viewportWidth,
+                viewportHeight);
+        }
+
+        if (settings.ShowPerformancePanel && settings.InstrumentStyle == HudInstrumentStyle.Es)
+        {
+            _esScene?.Draw(
+                target,
+                settings.ActiveLayout.EsLayout,
+                _packet,
+                _hasPacket,
+                _shiftLearner,
+                EffectiveMaxRpm(),
+                settings.EnableRedlineCalibration,
                 viewportX,
                 viewportY,
                 viewportWidth,
@@ -855,6 +892,8 @@ public sealed class HudScene : IDisposable
     public void Dispose()
     {
         _nfs19Scene?.Dispose();
+        _altezzaScene?.Dispose();
+        _esScene?.Dispose();
         _shiftTreePanel?.Dispose();
         _ghostPanel?.Dispose();
         _textLayoutCache.Dispose();

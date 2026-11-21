@@ -25,6 +25,17 @@ public static class HudLayoutDefaults
     public const double Nfs19Width = 601;
     public const double Nfs19Height = 416;
 
+    // 咬地鲨三表：左侧转速表 + 中间双单位速度表 + 三小表。
+    // 原型画布 1440×720，图形实际包围盒 1043.4×711.4，四边各加 5px 后向上取整，
+    // 同样是为了让布局编辑器的框紧贴图形。
+    public const double AltezzaWidth = 1054;
+    public const double AltezzaHeight = 722;
+
+    // ES 单表转速盘：圆形，原型画布 1000×1000，按用户要求对外基准直接取 500×500
+    // （内部坐标 = 原型坐标 × 0.5，不再另算包围盒）。
+    public const double EsWidth = 500;
+    public const double EsHeight = 500;
+
     public const double MinWidthRatio = 0.03;
     public const double MaxWidthRatio = 1.0;
 
@@ -81,5 +92,19 @@ public static class HudLayoutDefaults
     public static HudModuleLayout Nfs19Default()
     {
         return new HudModuleLayout { X = 0.6875, Y = 0.6113, WidthRatio = 0.2946 };
+    }
+
+    // 三表集群比单表宽得多，0.34 在 1920 宽下约 653px；
+    // X 取 0.42 让它在底部偏右（用户要求"底部靠右一点"）。
+    public static HudModuleLayout AltezzaDefault()
+    {
+        return new HudModuleLayout { X = 0.42, Y = 0.55, WidthRatio = 0.34 };
+    }
+
+    // 单表正方形，比咬地鲨小得多；0.26 在 1920 宽下约 499px。
+    // 放右下角，和 GHOST（右下偏中）错开，避免两套样式同时开时压在一起。
+    public static HudModuleLayout EsDefault()
+    {
+        return new HudModuleLayout { X = 0.695, Y = 0.50, WidthRatio = 0.26 };
     }
 }

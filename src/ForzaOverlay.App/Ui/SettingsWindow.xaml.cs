@@ -63,13 +63,15 @@ public partial class SettingsWindow : Window
         HotkeyCombo.ItemsSource = hotkeyOptions;
         HotkeyCombo.SelectedIndex = Array.IndexOf(hotkeyOptions, _settings.HotkeyText);
 
-        string[] styleOptions = ["经典", "GHOST LADDER", "SHIFT TREE", "仿NFS19"];
+        string[] styleOptions = ["经典", "GHOST LADDER", "SHIFT TREE", "仿NFS19", "咬地鲨", "ES"];
         InstrumentStyleCombo.ItemsSource = styleOptions;
         InstrumentStyleCombo.SelectedIndex = _settings.InstrumentStyle switch
         {
             HudInstrumentStyle.Festival => 1,
             HudInstrumentStyle.ShiftTree => 2,
             HudInstrumentStyle.Nfs19 => 3,
+            HudInstrumentStyle.Altezza => 4,
+            HudInstrumentStyle.Es => 5,
             _ => 0,
         };
 
@@ -416,6 +418,8 @@ public partial class SettingsWindow : Window
             1 => HudInstrumentStyle.Festival,
             2 => HudInstrumentStyle.ShiftTree,
             3 => HudInstrumentStyle.Nfs19,
+            4 => HudInstrumentStyle.Altezza,
+            5 => HudInstrumentStyle.Es,
             _ => HudInstrumentStyle.Classic,
         };
 

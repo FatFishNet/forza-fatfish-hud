@@ -71,6 +71,28 @@ public static class HudModuleCatalog
         },
         new()
         {
+            Name = "行驶仪表 · 咬地鲨",
+            BaseWidth = HudLayoutDefaults.AltezzaWidth,
+            BaseHeight = HudLayoutDefaults.AltezzaHeight,
+            AccentColor = "#FFD5AD4A",
+            FillColor = "#33D5AD4A",
+            IsVisible = static settings => settings.ShowPerformancePanel && settings.InstrumentStyle == HudInstrumentStyle.Altezza,
+            Read = static profile => profile.AltezzaLayout,
+            Write = static (profile, layout) => profile.AltezzaLayout = layout,
+        },
+        new()
+        {
+            Name = "行驶仪表 · ES",
+            BaseWidth = HudLayoutDefaults.EsWidth,
+            BaseHeight = HudLayoutDefaults.EsHeight,
+            AccentColor = "#FF35D6E4",
+            FillColor = "#3335D6E4",
+            IsVisible = static settings => settings.ShowPerformancePanel && settings.InstrumentStyle == HudInstrumentStyle.Es,
+            Read = static profile => profile.EsLayout,
+            Write = static (profile, layout) => profile.EsLayout = layout,
+        },
+        new()
+        {
             Name = "轮胎与悬挂面板",
             BaseWidth = HudLayoutDefaults.TireWidth,
             BaseHeight = HudLayoutDefaults.TireHeight,

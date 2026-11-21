@@ -82,7 +82,7 @@ set "RELDIR=%~dp0..\ForzaFatFishHUD-releases"
 if not exist "%RELDIR%" mkdir "%RELDIR%"
 set "ZIP=%RELDIR%\ForzaFatFishHUD-v%VERSION%-win64.zip"
 if exist "%ZIP%" del /q "%ZIP%"
-powershell -NoProfile -Command "Compress-Archive -Path '%DISTDIR%\*' -DestinationPath '%ZIP%' -Force"
+powershell -NoProfile -Command "Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::CreateFromDirectory('%DISTDIR%', '%ZIP%', [System.IO.Compression.CompressionLevel]::Optimal, $false)"
 if errorlevel 1 (
     echo.
     echo —πÀı ß∞‹£¨«ÎºÏ≤È PowerShell  «∑Òø…”√°£

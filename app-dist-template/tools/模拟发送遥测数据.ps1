@@ -25,7 +25,8 @@ function New-TelemetryPacket {
         [float]$tempFR,
         [float]$tempRL,
         [float]$tempRR,
-        [int]$drivetrain
+        [int]$drivetrain,
+        [float]$boostPsi
     )
 
     $p = New-Object byte[] 324
@@ -67,8 +68,9 @@ function New-TelemetryPacket {
     [BitConverter]::GetBytes($tempRL).CopyTo($p, 276)
     [BitConverter]::GetBytes($tempRR).CopyTo($p, 280)
 
-    # 增压 psi (offset 284)，约 1.0 bar
-    [BitConverter]::GetBytes([float]14.5).CopyTo($p, 284)
+    # 增压 psi (offset 284)。界面按 BoostBar = psi × 0.0689476 显示，
+    # 这里传 ±43.51 psi = ±3.00 bar，覆盖进气真空负压到满增压
+    [BitConverter]::GetBytes([float]$boostPsi).CopyTo($p, 284)
 
     # 油门/刹车/档位/转向 (offset 315/316/319/320)
     $p[315] = $throttle
@@ -85,11 +87,16 @@ Write-Host "开始发送模拟遥测到 127.0.0.1:23333，按 Ctrl+C 停止"
 $frame = 0
 while ($true) {
     $rpm      = 3000 + 4500 * [math]::Abs([math]::Sin($frame / 120.0))
-    $speed    = 40   + 30   * [math]::Abs([math]::Sin($frame / 240.0))
+    # 速度覆盖 0~999 km/h（999 是游戏内卡 bug 的极值），包内单位是 m/s
+    $speedKmh = 499.5 + 499.5 * [math]::Sin($frame / 240.0)   # 0 ~ 999
+    $speed    = $speedKmh / 3.6
     $steer    = [int][math]::Round(110 * [math]::Sin($frame / 90.0))
     $throttle = [byte](120 + 130 * [math]::Abs([math]::Sin($frame / 150.0)))
     $brake    = [byte][math]::Max(0, [math]::Min(255, 127 + 127 * [math]::Sin($frame / 170.0)))
-    $gear     = if (([int][math]::Floor($frame / 300) % 6) -eq 5) { 0 } else { 1 + ([int][math]::Floor($frame / 300) % 5) }
+    # 档位覆盖 R 与 1~10：包里 0 表示倒挡（GearNumber 会映射成 -1 显示 R），11 = 换挡中
+    # 周期 11 项：先 0(R)，再 1..10，覆盖双格档位显示
+    $gearStep = [int][math]::Floor($frame / 300) % 11
+    $gear     = $gearStep
     $slip     = 0.2 + 0.9 * [math]::Abs([math]::Sin($frame / 90.0))
     $suspFL   = 0.5 + 0.25 * [math]::Sin($frame / 45.0)
     $suspFR   = 0.5 + 0.25 * [math]::Sin($frame / 45.0 + 0.7)
@@ -102,12 +109,16 @@ while ($true) {
     $tempRL   = 32 + [math]::Max(0, $tempC - 4) * 1.8
     $tempRR   = 32 + [math]::Min(135, $tempC + 8) * 1.8
     $drivetrain = [int][math]::Floor($frame / 300) % 3
+    # 增压 ±3 bar 摆动（两位小数）：界面显示 BoostBar = psi × 0.0689476，
+    # 故 psi 取 ±43.51；正弦让数值连续变化，方便看指针与数字是否平滑
+    $boostBar  = 3.0 * [math]::Sin($frame / 180.0)
+    $boostPsi  = [math]::Round($boostBar / 0.0689476, 2)
 
     $packet = New-TelemetryPacket -rpm $rpm -speedMps $speed `
         -gear $gear -steerRaw $steer -throttle $throttle -brake $brake -slip $slip `
         -suspFL $suspFL -suspFR $suspFR -suspRL $suspRL -suspRR $suspRR `
         -tempFL $tempFL -tempFR $tempFR -tempRL $tempRL -tempRR $tempRR `
-        -drivetrain $drivetrain
+        -drivetrain $drivetrain -boostPsi $boostPsi
 
     # 扭矩覆盖负值区间（验证松油门时扭矩/马力钳位 0）
     $torque   = 230 + 290 * [math]::Sin($frame / 220.0)
