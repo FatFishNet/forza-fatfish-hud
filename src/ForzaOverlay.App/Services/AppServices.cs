@@ -1,6 +1,8 @@
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using ForzaOverlay.Core.Configuration;
+using ForzaOverlay.Core.Learning;
 using ForzaOverlay.Core.Logging;
 using ForzaOverlay.Core.Monitoring;
 using ForzaOverlay.Core.Networking;
@@ -52,7 +54,30 @@ public static class AppServices
             : "[权限] 本程序权限低于游戏，全局快捷键会被系统拦截");
         PrivilegeStateChanged?.Invoke();
     }
+
     public static event Action<AppSettings>? SettingsApplied;
+
+    /// <summary>
+    /// 清空红区自学习数据的动作，由 <see cref="App"/> 在创建 HUD 场景后注入。
+    /// 学习器实例归 HudScene 所有，AppServices 不持有它；GPU 覆盖层启动失败时保持 null，
+    /// 这时退化为只清磁盘文件（见 <see cref="ClearShiftLearningData"/>）。
+    /// </summary>
+    public static Action? ClearShiftLearningAction { get; set; }
+
+    /// <summary>清空全部车辆的红区自学习数据。</summary>
+    public static void ClearShiftLearningData()
+    {
+        if (ClearShiftLearningAction is not null)
+        {
+            ClearShiftLearningAction();
+            Diagnostics.Write("[红区校正] 已清空全部自学习数据（内存 + 磁盘）");
+            return;
+        }
+
+        string directory = Path.Combine(AppContext.BaseDirectory, "data");
+        ShiftPointLearner.ClearStorage(directory);
+        Diagnostics.Write("[红区校正] HUD 场景未就绪，仅清空磁盘学习数据");
+    }
 
     public static void ApplySettings(AppSettings settings)
     {

@@ -252,7 +252,9 @@ internal sealed class GhostPanel : IDisposable
                 brushes.Get(target, boostColor));
         }
 
-        string boostText = hasPacket ? HudDraw.Truncate(boostBar, 2) : "--";
+        // 增压读数：两位小数 + 正负号，字符数恒为 5（+0.00 / -0.35 / +3.00）。
+        // Consolas 本身等宽，正负切换时整串宽度不变，不需要再逐格定槽。
+        string boostText = hasPacket ? HudDraw.Signed(boostBar, HudDraw.BoostDecimals) : "--";
         HudDraw.Text(target, boostText, _ghostBoostValueFormat, whiteBrush, 335f, 216f, 44f, 18f);
         HudDraw.Text(target, "bar", _ghostBoostUnitFormat, dimBrush, 383f, 216f, 26f, 18f);
 

@@ -361,6 +361,40 @@ public sealed class ShiftPointLearner
         return (max * FallbackRedlineRatio, false);
     }
 
+    /// <summary>清空全部车辆的学习结果（内存 + 磁盘）。</summary>
+    /// <remarks>
+    /// 给设置页的「清空自学习数据」用（2026-11-26 用户提出）。
+    /// 有些脏值会让某辆车**永久**学不到新断油点 —— 实测 car 1124 的 `MaxWotRpm` 被强行降档
+    /// 拖到满表后，与 0.99 饱和过滤正好卡成「窗口最大转速永远差一丝」的死锁，代码里没有出口，
+    /// 只能清档重学。与其在代码里猜哪个值脏了，不如把清档能力交给用户。
+    /// </remarks>
+    public void ClearAll()
+    {
+        lock (_gate)
+        {
+            _profiles.Clear();
+            _activeKey = string.Empty;
+            _cutWindow.Clear();
+            Save();
+        }
+    }
+
+    /// <summary>没有学习器实例时（GPU 覆盖层启动失败）直接清磁盘，避免提示与实际不符。</summary>
+    public static void ClearStorage(string storageDirectory)
+    {
+        string path = Path.Combine(storageDirectory, "shift-learning.json");
+        try
+        {
+            Directory.CreateDirectory(storageDirectory);
+            Dictionary<string, ShiftPointProfile> empty = new(StringComparer.Ordinal);
+            File.WriteAllText(path, JsonSerializer.Serialize(empty, SerializerOptions));
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Write("换挡学习数据清空失败: " + ex.Message);
+        }
+    }
+
     private static double Median(List<double> values)
     {
         double[] sorted = values.OrderBy(value => value).ToArray();

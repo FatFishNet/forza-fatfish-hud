@@ -12,4 +12,7 @@ public enum HudInstrumentStyle
 
     /// <summary>ES 数字转速盘（单表转速 + 中央车速/档位，青色点阵）。</summary>
     Es = 5,
+
+    /// <summary>极简弧环（FH4 极简语言：白色细弧 + 中央档位，超红区转紫并呼吸辉光）。</summary>
+    Ring = 6,
 }

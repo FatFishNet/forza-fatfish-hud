@@ -36,6 +36,11 @@ public static class HudLayoutDefaults
     public const double EsWidth = 500;
     public const double EsHeight = 500;
 
+    // 极简弧环：单表圆形，原型画布 380×380 但图形包围盒只有 302×320，
+    // 四边各留 5px 安全边距后基准取 312×330（内部坐标仍是原型原值，靠 ContentShift 平移）。
+    public const double RingWidth = 312;
+    public const double RingHeight = 330;
+
     public const double MinWidthRatio = 0.03;
     public const double MaxWidthRatio = 1.0;
 
@@ -106,5 +111,12 @@ public static class HudLayoutDefaults
     public static HudModuleLayout EsDefault()
     {
         return new HudModuleLayout { X = 0.695, Y = 0.50, WidthRatio = 0.26 };
+    }
+
+    // 单表圆形但比 ES 矮（312×330）。0.24 在 1920 宽下约 461px；
+    // 放在 ES 位置略上方，避免与 ES / GHOST 重合。
+    public static HudModuleLayout RingDefault()
+    {
+        return new HudModuleLayout { X = 0.715, Y = 0.42, WidthRatio = 0.24 };
     }
 }

@@ -44,6 +44,13 @@ public sealed class HudScene : IDisposable
     private readonly IDWriteTextFormat? _classicLabelFormat;
     private readonly IDWriteTextFormat? _classicLabel15Format;
     private readonly IDWriteTextFormat? _classicUnit15Format;
+
+    /// <summary>
+    /// 经典面板「增压」那一行的字符格宽度（构造期按实测填充）。
+    /// 增压是唯一带符号、且会正负切换的数值列，不逐格定槽的话
+    /// 「+0.42」与「-0.35」宽度不同，右对齐时整串会左右挪（2026-11-26 用户要求不跳动）。
+    /// </summary>
+    private float[] _classicBoostCells = [];
     private readonly IDWriteTextFormat? _tireLabelFormat;
     private readonly IDWriteTextFormat? _tireTempFormat;
     private readonly IDWriteTextFormat? _tirePctLeftFormat;
@@ -53,6 +60,7 @@ public sealed class HudScene : IDisposable
     private Nfs19Scene? _nfs19Scene;
     private AltezzaScene? _altezzaScene;
     private EsScene? _esScene;
+    private RingScene? _ringScene;
 
     /// <summary>
     /// 最后一次有效的最大转速。游戏在菜单 / 车库 / 暂停时不发该值（为 0），
@@ -135,7 +143,11 @@ public sealed class HudScene : IDisposable
             _ghostPanel = new GhostPanel(_dwrite, _customFonts, _customFamilyName);
             _nfs19Scene = new Nfs19Scene(_dwrite);
             _altezzaScene = new AltezzaScene(_dwrite);
-        _esScene = new EsScene(_dwrite);
+            _esScene = new EsScene(_dwrite);
+            _ringScene = new RingScene(_dwrite, _customFonts);
+
+            // 经典面板增压列的定槽：构造期按字体实测一次，之后每帧直接用。
+            _classicBoostCells = HudDraw.BuildSignedCells(_dwrite, _classicValueFormat, HudDraw.BoostDecimals, 19f);
         }
         catch (Exception ex)
         {
@@ -185,16 +197,32 @@ public sealed class HudScene : IDisposable
     {
         try
         {
-            string path = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts", "D-DIN-Bold.ttf");
-            if (!System.IO.File.Exists(path))
+            // 内置字体全部塞进同一个集合：D-DIN（GHOST）、Orbitron + Rajdhani（极简弧环）。
+            // 少加载一个的后果不是报错，而是对应面板静默回退到系统字体、字形对不上原型。
+            string[] files = ["D-DIN-Bold.ttf", "Orbitron-Bold.ttf", "Rajdhani-SemiBold.ttf"];
+
+            using IDWriteFactory5 factory5 = factory.QueryInterface<IDWriteFactory5>();
+            using IDWriteFontSetBuilder1 builder = factory5.CreateFontSetBuilder();
+
+            int added = 0;
+            foreach (string name in files)
+            {
+                string path = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts", name);
+                if (!System.IO.File.Exists(path))
+                {
+                    continue;
+                }
+
+                using IDWriteFontFile fontFile = factory.CreateFontFileReference(path, null);
+                builder.AddFontFile(fontFile);
+                added++;
+            }
+
+            if (added == 0)
             {
                 return null;
             }
 
-            using IDWriteFactory5 factory5 = factory.QueryInterface<IDWriteFactory5>();
-            using IDWriteFontSetBuilder1 builder = factory5.CreateFontSetBuilder();
-            using IDWriteFontFile fontFile = factory.CreateFontFileReference(path, null);
-            builder.AddFontFile(fontFile);
             using IDWriteFontSet fontSet = builder.CreateFontSet();
 
             using IDWriteFactory3 factory3 = factory.QueryInterface<IDWriteFactory3>();
@@ -202,7 +230,7 @@ public sealed class HudScene : IDisposable
         }
         catch (Exception ex)
         {
-            ForzaOverlay.Core.Logging.Diagnostics.Write("D-DIN 字体加载失败: " + ex.Message);
+            ForzaOverlay.Core.Logging.Diagnostics.Write("内置字体加载失败: " + ex.Message);
             return null;
         }
     }
@@ -338,6 +366,23 @@ public sealed class HudScene : IDisposable
                 viewportHeight);
         }
 
+        if (settings.ShowPerformancePanel && settings.InstrumentStyle == HudInstrumentStyle.Ring)
+        {
+            _ringScene?.Draw(
+                target,
+                settings.ActiveLayout.RingLayout,
+                _packet,
+                _hasPacket,
+                _shiftLearner,
+                EffectiveMaxRpm(),
+                settings.EnableRedlineCalibration,
+                viewportX,
+                viewportY,
+                viewportWidth,
+                viewportHeight,
+                delta);
+        }
+
         if (settings.ShowTirePanel)
         {
             DrawTirePanel(target, settings, viewportX, viewportY, viewportWidth, viewportHeight);
@@ -409,14 +454,33 @@ public sealed class HudScene : IDisposable
         [
             _hasPacket ? Math.Max(0f, _packet.PowerKw).ToString("F0", CultureInfo.InvariantCulture) : "--",
             _hasPacket ? HudDraw.Truncate(Math.Max(0f, _packet.TorqueNm), 1) : "--",
-            _hasPacket ? HudDraw.Truncate(_packet.BoostBar, 2) : "--",
+            // 增压统一两位小数 + 符号（项目级标准见 HudDraw.BoostDecimals）
+            _hasPacket ? HudDraw.Signed(_packet.BoostBar, HudDraw.BoostDecimals) : "--",
         ];
         float[] rowY = [38f, 66f, 94f];
 
         for (int i = 0; i < 3; i++)
         {
             HudDraw.Text(target, rowLabels[i], _classicLabelFormat, dimBrush, 26f, rowY[i], 30f, 20f);
-            HudDraw.Text(target, rowValues[i], _classicValueFormat, whiteBrush, 56f, rowY[i] - 2f, 68f, 24f);
+
+            if (i == 2 && _hasPacket)
+            {
+                // 增压列逐格落位：正负切换时整串宽度不变，右边缘钉死在 124。
+                HudDraw.FixedCellsRightAligned(
+                    target,
+                    rowValues[i],
+                    _classicValueFormat,
+                    whiteBrush,
+                    56f + 68f,
+                    rowY[i] - 2f + 12f,
+                    _classicBoostCells,
+                    24f);
+            }
+            else
+            {
+                HudDraw.Text(target, rowValues[i], _classicValueFormat, whiteBrush, 56f, rowY[i] - 2f, 68f, 24f);
+            }
+
             HudDraw.Text(target, rowUnits[i], _classicLabelFormat, dimBrush, 132f, rowY[i], 30f, 20f);
         }
 
@@ -826,6 +890,12 @@ public sealed class HudScene : IDisposable
         }
     }
 
+    /// <summary>清空红区自学习的全部车辆数据（内存 + 磁盘），供设置页的「清空自学习数据」调用。</summary>
+    public void ClearShiftLearning()
+    {
+        _shiftLearner.ClearAll();
+    }
+
     private ID2D1SolidColorBrush GetBrush(ID2D1RenderTarget target, Color4 color)
     {
         return _brushCache.Get(target, color);
@@ -894,6 +964,7 @@ public sealed class HudScene : IDisposable
         _nfs19Scene?.Dispose();
         _altezzaScene?.Dispose();
         _esScene?.Dispose();
+        _ringScene?.Dispose();
         _shiftTreePanel?.Dispose();
         _ghostPanel?.Dispose();
         _textLayoutCache.Dispose();

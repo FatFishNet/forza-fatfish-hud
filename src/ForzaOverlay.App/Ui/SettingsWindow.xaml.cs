@@ -25,6 +25,12 @@ public partial class SettingsWindow : Window
     private const int DefaultPort = 23333;
     private const double PerfSettingsBarWidth = 284;
 
+    /// <summary>普通设置项的「✓ 已生效」停留时长。</summary>
+    private const double InlineHintSeconds = 2;
+
+    /// <summary>清档结果停留更久：用户要看清它真的清掉了。</summary>
+    private const double ClearLearningHintSeconds = 5;
+
     private static readonly Brush SelectedNavBackground = new SolidColorBrush(Color.FromRgb(0xEB, 0xEE, 0xF2));
     private static readonly Brush SelectedNavForeground = new SolidColorBrush(Color.FromRgb(0x14, 0x15, 0x18));
     private static readonly Brush NormalNavForeground = new SolidColorBrush(Color.FromRgb(0x5A, 0x5F, 0x68));
@@ -63,7 +69,7 @@ public partial class SettingsWindow : Window
         HotkeyCombo.ItemsSource = hotkeyOptions;
         HotkeyCombo.SelectedIndex = Array.IndexOf(hotkeyOptions, _settings.HotkeyText);
 
-        string[] styleOptions = ["经典", "GHOST LADDER", "SHIFT TREE", "仿NFS19", "咬地鲨", "ES"];
+        string[] styleOptions = ["经典", "GHOST LADDER", "SHIFT TREE", "仿NFS19", "咬地鲨", "ES", "极简弧环"];
         InstrumentStyleCombo.ItemsSource = styleOptions;
         InstrumentStyleCombo.SelectedIndex = _settings.InstrumentStyle switch
         {
@@ -72,6 +78,7 @@ public partial class SettingsWindow : Window
             HudInstrumentStyle.Nfs19 => 3,
             HudInstrumentStyle.Altezza => 4,
             HudInstrumentStyle.Es => 5,
+            HudInstrumentStyle.Ring => 6,
             _ => 0,
         };
 
@@ -381,6 +388,33 @@ public partial class SettingsWindow : Window
         Commit();
     }
 
+    private void ClearLearningButton_Click(object sender, RoutedEventArgs e)
+    {
+        ConfirmWindow dialog = new(
+            "清空自学习数据",
+            "清空自学习数据？",
+            "将删除全部车辆的红区学习结果（断油点、升挡点、最高档），清空后需要重新驾驶学习。\n此操作无法撤销。是否继续？")
+        {
+            Owner = this,
+        };
+
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        AppServices.ClearShiftLearningData();
+        ShowClearLearningHint();
+    }
+
+    /// <summary>
+    /// 清档提示与「✓ 已生效」用同一套样式，只有文字和停留时长不同。
+    /// </summary>
+    private void ShowClearLearningHint()
+    {
+        ShowInlineHint(RedlineClearHint, "✓ 旧数据已清空", ClearLearningHintSeconds);
+    }
+
     private void ShiftHintCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_loading || ShiftHintCombo.SelectedIndex < 0)
@@ -420,6 +454,7 @@ public partial class SettingsWindow : Window
             3 => HudInstrumentStyle.Nfs19,
             4 => HudInstrumentStyle.Altezza,
             5 => HudInstrumentStyle.Es,
+            6 => HudInstrumentStyle.Ring,
             _ => HudInstrumentStyle.Classic,
         };
 
@@ -1127,15 +1162,21 @@ public partial class SettingsWindow : Window
 
     private void ShowInlineHint(TextBlock hint)
     {
-        hint.Text = "✓ 已生效";
+        ShowInlineHint(hint, "✓ 已生效", InlineHintSeconds);
+    }
+
+    /// <summary>
+    /// 同一套「✓ …」提示样式的通用实现。清档提示文字不同、且 5 秒才淡出
+    /// （这个动作的结果比普通设置项更需要看清楚），所以把文字与时长抽成参数。
+    /// </summary>
+    private void ShowInlineHint(TextBlock hint, string text, double seconds)
+    {
+        hint.Text = text;
         hint.Foreground = OkHintBrush;
         hint.Opacity = 1;
         if (!_inlineHintTimers.TryGetValue(hint, out DispatcherTimer? timer))
         {
-            timer = new DispatcherTimer(DispatcherPriority.Background)
-            {
-                Interval = TimeSpan.FromSeconds(2),
-            };
+            timer = new DispatcherTimer(DispatcherPriority.Background);
             timer.Tick += (_, _) =>
             {
                 timer.Stop();
@@ -1144,6 +1185,7 @@ public partial class SettingsWindow : Window
             _inlineHintTimers[hint] = timer;
         }
 
+        timer.Interval = TimeSpan.FromSeconds(seconds);
         timer.Stop();
         timer.Start();
     }

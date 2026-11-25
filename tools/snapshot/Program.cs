@@ -125,7 +125,7 @@ internal static class Program
                 Type = RenderTargetType.Hardware,
             });
 
-        target.TextAntialiasMode = TextAntialiasMode.Grayscale;
+        target.TextAntialiasMode = Vortice.Direct2D1.TextAntialiasMode.Grayscale;
 
         Vortice.DirectWrite.IDWriteFactory dwrite =
             Vortice.DirectWrite.DWrite.DWriteCreateFactory<Vortice.DirectWrite.IDWriteFactory>(
@@ -193,6 +193,10 @@ internal static class Program
         // 只有显式给 --boost none 时才当作无增压车辆
         bool hasBoost = !options.NoBoost;
 
+        // 内置字体集合（D-DIN + Orbitron + Rajdhani）：RingScene 靠它找 Rajdhani。
+        // 快照工具的 bin 目录下有 Assets/Fonts（主程序 csproj 的复制项会带过来）。
+        Vortice.DirectWrite.IDWriteFontCollection1? customFonts = LoadEmbeddedFonts(dwrite);
+
         switch (options.Style)
         {
             case "altezza":
@@ -249,8 +253,75 @@ internal static class Program
                 break;
             }
 
+            case "ring":
+            {
+                using RingScene scene = new(dwrite, customFonts);
+                scene.Draw(
+                    target,
+                    layout,
+                    packet,
+                    hasPacket: true,
+                    learner,
+                    options.MaxRpm,
+                    useLearnedRedline: false,
+                    viewportX: 0,
+                    viewportY: 0,
+                    viewportWidth: viewportWidth,
+                    viewportHeight: viewportHeight,
+                    deltaSeconds: 0);
+                break;
+            }
+
             default:
-                throw new ArgumentException($"不支持的样式：{options.Style}（可用：altezza / nfs19 / es）");
+                throw new ArgumentException($"不支持的样式：{options.Style}（可用：altezza / nfs19 / es / ring）");
+        }
+    }
+
+    /// <summary>
+    /// 把内置字体装进一个自定义集合，供 RingScene 找 Rajdhani。
+    /// 与主程序 <c>HudScene.LoadEmbeddedFonts</c> 同一套做法；找不到字体文件时返回 null，
+    /// 场景会回退到系统字体栈（不会崩，只是字形和原型对不上）。
+    /// </summary>
+    private static Vortice.DirectWrite.IDWriteFontCollection1? LoadEmbeddedFonts(
+        Vortice.DirectWrite.IDWriteFactory factory)
+    {
+        try
+        {
+            string[] files = ["D-DIN-Bold.ttf", "Orbitron-Bold.ttf", "Rajdhani-SemiBold.ttf"];
+            string dir = System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "Fonts");
+
+            using Vortice.DirectWrite.IDWriteFactory5 factory5 =
+                factory.QueryInterface<Vortice.DirectWrite.IDWriteFactory5>();
+            using Vortice.DirectWrite.IDWriteFontSetBuilder1 builder = factory5.CreateFontSetBuilder();
+
+            int added = 0;
+            foreach (string name in files)
+            {
+                string path = System.IO.Path.Combine(dir, name);
+                if (!System.IO.File.Exists(path))
+                {
+                    continue;
+                }
+
+                using Vortice.DirectWrite.IDWriteFontFile fontFile = factory.CreateFontFileReference(path, null);
+                builder.AddFontFile(fontFile);
+                added++;
+            }
+
+            if (added == 0)
+            {
+                return null;
+            }
+
+            using Vortice.DirectWrite.IDWriteFontSet fontSet = builder.CreateFontSet();
+            using Vortice.DirectWrite.IDWriteFactory3 factory3 =
+                factory.QueryInterface<Vortice.DirectWrite.IDWriteFactory3>();
+            return factory3.CreateFontCollectionFromFontSet(fontSet);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine("内置字体加载失败（将回退系统字体）: " + ex.Message);
+            return null;
         }
     }
 

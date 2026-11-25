@@ -80,10 +80,10 @@ internal sealed class SnapshotOptions
     {
         Console.WriteLine(
             """
-            用法： snapshot --style <altezza|nfs19|es> -o <输出.png> [参数]
+            用法： snapshot --style <altezza|nfs19|es|ring> -o <输出.png> [参数]
 
             必填
-              --style <名>        仪表样式：altezza / nfs19 / es
+              --style <名>        仪表样式：altezza / nfs19 / es / ring
               -o, --output <路径> 输出 PNG 路径
 
             画布
@@ -112,6 +112,9 @@ internal sealed class SnapshotOptions
 
               # ES 数字转速盘，1:1 出图（基准 500×500）
               snapshot --style es --width 500 --height 500 -o es.png
+
+              # 极简弧环，1:1 出图（基准 312×330）
+              snapshot --style ring --width 312 --height 330 -o ring.png
 
             注意：输出 PNG 是「透明背景 + 直通 alpha」，
                   交给 tools 里的 measure.py / colors.py 前要加 --flatten。

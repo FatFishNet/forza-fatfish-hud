@@ -17,5 +17,16 @@ Forza Fat Fish HUD 第三方组件声明
    许可：SIL Open Font License 1.1
    许可证全文见：Assets/Fonts/LICENSE.txt
 
+4. Orbitron 字体（Assets/Fonts/Orbitron-Bold.ttf）
+   Copyright 2018 The Orbitron Project Authors
+   许可：SIL Open Font License 1.1
+   项目：https://github.com/theleagueof/orbitron
+
+5. Rajdhani 字体（Assets/Fonts/Rajdhani-SemiBold.ttf）
+   Copyright (c) 2014, Indian Type Foundry
+   许可：SIL Open Font License 1.1
+   项目：https://github.com/googlefonts/rajdhani
+
 以上组件的完整许可证文本随 NuGet 包分发，可执行 `dotnet list package --include-transitive`
 或在 NuGet 缓存中查看。若需在发行包内附全文，请从对应包目录复制 LICENSE 文件。
+字体类组件的许可证全文见：Assets/Fonts/LICENSE.txt

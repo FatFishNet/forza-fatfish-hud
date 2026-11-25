@@ -5,5 +5,22 @@ Source : https://github.com/datto/d-din
 Files  : Assets/Fonts/D-DIN-Bold.ttf
 License: SIL Open Font License 1.1
 
-This bundled font is distributed under the SIL Open Font License, which permits
-embedding and redistribution as part of this application.
+Orbitron
+========
+
+Source : https://github.com/theleagueof/orbitron
+Files  : Assets/Fonts/Orbitron-Bold.ttf
+License: SIL Open Font License 1.1
+Copyright 2018 The Orbitron Project Authors (https://github.com/theleagueof/orbitron)
+
+Rajdhani
+========
+
+Source : https://github.com/googlefonts/rajdhani
+Files  : Assets/Fonts/Rajdhani-SemiBold.ttf
+License: SIL Open Font License 1.1
+Copyright (c) 2014, Indian Type Foundry (info@indiantypefoundry.com)
+
+These bundled fonts are distributed under the SIL Open Font License, which permits
+embedding and redistribution as part of this application. The license text is
+available at https://openfontlicense.org

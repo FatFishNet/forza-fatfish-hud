@@ -142,8 +142,8 @@ RGB 纯白黑为主，彩色只用于**数据本身**（条、指针、胎温）
 - 每种画面比例（16:9、21:9、32:9、48:9、16:10、自定义）各存一套布局
 - 绘制时以**游戏客户区**为基准：`scale = WidthRatio × 客户区宽 / 基准宽`，并加上客户区左上角偏移
 
-当前模块：行驶仪表 · 经典 820×150、行驶仪表 · GHOST LADDER 420×238、行驶仪表 · SHIFT TREE 820×320、行驶仪表 · 仿NFS19 601×416、行驶仪表 · 咬地鲨 1054×722、轮胎与悬挂 220×212、HUD 渲染资源占用 200×140。
-六种仪表样式由设置项 `InstrumentStyle` 六选一（经典 / GHOST LADDER / SHIFT TREE / 仿NFS19 / 咬地鲨 / ES），各自独立保存布局。
+当前模块：行驶仪表 · 经典 820×150、GHOST LADDER 420×238、SHIFT TREE 820×320、仿NFS19 601×416、咬地鲨 1054×722、ES 500×500、极简弧环 312×330、轮胎与悬挂 220×212、HUD 渲染资源占用 200×140。
+七种仪表样式由设置项 `InstrumentStyle` 七选一（经典 / GHOST LADDER / SHIFT TREE / 仿NFS19 / 咬地鲨 / ES / 极简弧环），各自独立保存布局。
 
 ---
 
@@ -157,6 +157,7 @@ RGB 纯白黑为主，彩色只用于**数据本身**（条、指针、胎温）
 | 行驶仪表 · 仿NFS19 | `Nfs19Scene.Draw` | 601 × 416 | `Nfs19Layout` | 开 |
 | 行驶仪表 · 咬地鲨 | `AltezzaScene.Draw` | 1054 × 722 | `AltezzaLayout` | 开 |
 | 行驶仪表 · ES | `EsScene.Draw` | 500 × 500 | `EsLayout` | 开 |
+| 行驶仪表 · 极简弧环 | `RingScene.Draw` | 312 × 330 | `RingLayout` | 开 |
 | 轮胎与悬挂面板 | `DrawTirePanel` | 220 × 212 | `TireLayout` | 开 |
 | HUD 渲染资源占用 | `DrawPerfPanel` | 200 × 140 | `PerfLayout` | 关 |
 
@@ -514,6 +515,96 @@ sweepDeg = (spanRpm / 1000) × 36
 
 ---
 
+## 5.4 极简弧环（FH4 极简语言）
+
+原型 `temp/极简弧环.html`（从 `design/temp/地平线HUD仪表.html` 拆出，只保留 draw1）。
+
+### 基准与坐标
+
+| 项 | 原型值 | 本项目 |
+|---|---|---|
+| 画布 | 380 × 380 | **312 × 330**（图形包围盒 302×320 + 四边 5px） |
+| 圆心 | (190, 176) | (156, 156) —— 即原型坐标 + `ContentShift(-34, -20)` |
+| 主弧半径 | 148 | 148（**1:1，不缩放**） |
+| 主弧线宽 | 6 | 6 |
+| 增压弧半径 | 128 | 128 |
+
+内部坐标直接写原型值，靠 `ShiftX = -34` / `ShiftY = -20` 平移吸收；
+**不要**给半径乘任何系数 —— 这是唯一一套 1:1 搬过来的表，量图像时像素即设计坐标。
+
+### 角度制
+
+与咬地鲨 / ES 同系（SVG 制）：`0° = 正右`、y 轴向下、`PointOn` 用 `cos/sin`。
+起始角 **135°**（左下），扫掠 **270°**，与原型 `A0 = π*0.75`、`SW = π*1.5` 一致。
+**不要**用仿NFS19 / SHIFT TREE 的 `sin/-cos`（0° 正上），混了整条弧会偏。
+
+### 图层顺序
+
+内侧淡圈 → 底轨 → 值弧（含红区辉光）→ 刻度 → 数字 → 静态标签 → 增压弧 → 档位/车速。
+
+### 配色（`RpmColorScale` 的第四个例外）
+
+原型规定超红区后整条弧变紫 `#c86bff` 并呼吸辉光，不走黄→红：
+
+| 状态 | 颜色 |
+|---|---|
+| 正常 | 白 `#ffffff` |
+| 超红区（`rpmRatio > redlineRatio`） | 紫 `#c86bff` + 多层描边伪造辉光 |
+| 红区起点标记点、红区刻度与数字 | 红 `#ff3b5c` |
+| 增压真空段（负压） | 灰 `#7a8194` |
+| 增压正压段 | 紫 `#9d6bff` |
+
+已有三个例外（SHIFT TREE、咬地鲨、ES），这是第四个，**不要**给这套表套 `RpmColorScale`。
+
+### 量程与红区
+
+- 转速量程按千转向上取整、夹 4~16（与 ES / 咬地鲨各自维护一份）
+- 刻度数 = 数字间隔数 × 2，保证「大刻度永远正对数字」
+- 红区接 `ShiftPointLearner.GetRedlineRatio`；关闭校正或没有包时回退 **75%**
+- 红区起点在弧上画一个 2.5px 红点
+
+### 增压弧
+
+- 量程 **-1.0 ~ 3.0 bar**（0 落在 25% 处，`BoostZeroFraction = 0.25`）
+- **负值是真实物理量**（进气歧管真空），必须画出来，不要 clamp 到 0
+- 从零位向两侧生长：负压往左画灰、正压往右画紫
+- **不判断有无增压车**（用户明确要求）：始终按 `packet.BoostBar` 画
+
+### 增压读数格式（2026-11-26 定的项目级标准）
+
+- **恒两位小数**，`0` 也显示成 `+0.00`；**正数显式带 `+`**（`+0.42` / `-0.35` / `+3.00`），字符数恒为 5
+- **整行三段（`BOOST` / 数字 / `bar`）按实测宽度拼接后整组居中**，数字段内部逐格定槽：
+  符号格取 `+`/`-` 里较宽者、数字格取 0~9 里最宽者、小数点单独一格。
+  这样数值怎么变，数字块总宽恒定，`BOOST` 与 `bar` 不会跟着左右挪
+- 三个文字块的宽度在**构造期**用 `HudDraw.MeasureAdvance` 量一次存起来，**每帧不再排版**（热路径禁止分配）
+- 格式化一律走 `HudDraw.Signed()`：内部先消 float 浮点误差再截断。
+  遥测 `BoostBar` 是 float，`-0.35` 实际存成 `-0.34999999…`，直接截断会显示 `-0.34`（出图实测发现）
+- 同一标准适用于 GHOST（`Consolas` 本身等宽，只需换格式函数）与经典仪表「增压」行（右对齐列逐格落位）
+
+### 字体
+
+- 内置 **Rajdhani SemiBold**（OFL 1.1），跟 D-DIN 一起装进同一个自定义字体集合
+- 原型 CSS 里还引了 Orbitron，但 `draw1` 从头到尾没用过它 —— 所有文字都是默认 Rajdhani
+- 字体文件在 `Assets/Fonts/`，`HudScene.LoadEmbeddedFonts` 一次性加载三个文件
+
+### 换挡闪光
+
+检测档位变化（只认 1~10）→ `_flash = 1`，按 `3.2/s` 衰减（约 0.31 秒）：
+
+- 档位数字放大 `96 × (1 + flash × 0.12)`
+- 底下垫一层放大 1.06 倍的紫色半透明字当辉光
+- 档位右侧画方向箭头（升挡朝上紫、降挡朝下灰）
+
+**放大必须用 `Matrix3x2.CreateScale(scale, center)`**，不要每帧重建 `IDWriteTextFormat`
+——换挡那几帧恰好在渲染热路径上，持续分配会拖帧。
+
+### 已知限制
+
+- 原型用 CSS `shadowBlur` 做柔光，D2D 没有模糊，用「更宽 + 更低透明度」的多层描边伪造
+- 呼吸辉光的相位取 `Environment.TickCount64`，快照工具是静态图，看不到闪烁
+
+---
+
 ## 6. 停用一个模块
 
 不要直接删，注释保留并标注原因：
@@ -571,49 +662,27 @@ sweepDeg = (spanRpm / 1000) × 36
 
 ## 10. 不开游戏验证绘制（tools/）
 
-改 HUD 绘制后，**不要靠启动游戏看效果**。用 `tools/` 出一张图、量一遍即可闭环。
+改 HUD 绘制后，**不要靠启动游戏看效果**。链路：C# 绘制代码 → snapshot 出 PNG → `measure` / `colors` / `diff` / `crop` 分析。
 
-```
-C# 绘制代码 → snapshot 出 PNG → measure / colors / diff / crop 分析
-```
-
-### 10.1 出图
+**工具链完整用法见 [`tools/README.md`](../tools/README.md)**（含各脚本参数、三表圆心坐标、已知局限）。
+这里只列做 HUD 绘制时**必须记住的三条**：
 
 ```powershell
 # 单张：按基准尺寸 1:1 渲染，输出像素坐标等于设计坐标
 dotnet run --project tools/snapshot --style altezza --width 1054 --height 722 -o temp\snapshots\a.png
 
-# 边界批量：一次跑 8 个极端用例
+# 边界批量：一次跑 8 个极端用例（速度 0/999、档位 R/10、增压 ±3、转速 0/满）
 dotnet run --project tools/snapshot --preset extremes --style altezza --width 1054 --height 722
 ```
 
-`--preset extremes` 覆盖：速度 0 / 999、档位 R / 10、增压 ±3 bar、转速 0 / 满量程。
+- **视口必须等于输出画布**：`scale = WidthRatio × 视口宽 / 基准宽`，视口更大时会放大并裁切；
+  相等时 `scale` 恰为 1，输出像素才等于设计坐标
+- **`tools/snapshot` 独立 csproj、不进 `.sln`**，靠 `InternalsVisibleTo("snapshot")` 访问
+  `AltezzaScene` / `Nfs19Scene` / `EsScene` / `RingScene`，**不要把场景类改成 public** 来图省事；
+  经典 / GHOST / SHIFT TREE 写在 `HudScene` 内、依赖 `AppServices`，暂未接入
+- **改完绘制代码先跑 `--preset extremes`**，比逐个手敲参数快，也不会漏掉边界
 
-**关键约束**：`snapshot` 的视口必须等于输出画布。因为
-`scale = WidthRatio × 视口宽 / 基准宽`，视口更大时会放大并裁切；
-两者相等时 `WidthRatio=1` 使 `scale` 恰为 1，输出像素才等于设计坐标。
-
-**工程约束**：`tools/snapshot` 独立成项目、**不进 `.sln`**，主程序的编译与发布不受影响。
-它靠 `InternalsVisibleTo("snapshot")` 访问 `AltezzaScene` / `Nfs19Scene`，
-**不要把场景类改成 public** 来图省事。
-
-### 10.2 量图
-
-脚本用 DSH 自带 Python 跑，本机无需另装：
-`C:\Users\ZC\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe`
-
-| 脚本 | 用途 |
-|---|---|
-| `measure.py` | `radial` / `ray` / `arc` / `blobs`，输出 JSON，`--ref-r` 声明基准 |
-| `colors.py` | 主色分析 / `--candidates` 验证已知色值 |
-| `diff.py` | 差异定位（输出框，不是评分） |
-| `crop.py` | 批量裁剪 / 拼接 + 坐标标注 |
-| `extract.py` / `trace.py` | 抠图 / 位图转 SVG path |
-| `render.py` | 渲染 HTML 原型（需完全权限） |
-
-完整用法见 `tools/README.md`。
-
-### 10.3 三个必踩的坑
+### 三个必踩的坑
 
 **① 透明背景必须 `--flatten`**
 
@@ -623,9 +692,9 @@ HUD 是透明背景 + alpha。直接用 `.convert('RGB')` 会把透明区当成�
 
 **② 量文字要按颜色通道过滤**
 
-用亮度阈值量文字时，彩色元素（红指针、金刻度）也会被算进墨迹，
-造成「文字被拉宽」的假象。量奶油白/金文字应按通道过滤（`r>150 & g>110 & b>60`），
-或先排除红色。另外**测量窗口要给足余量**，贴边会量出假的「宽度 = 窗口宽」。
+用亮度阈值量文字时，彩色元素（红指针、金刻度）也会被算进墨迹，造成「文字被拉宽」的假象。
+量奶油白/金文字应按通道过滤（`r>150 & g>110 & b>60`），或先排除红色。
+另外**测量窗口要给足余量**，贴边会量出假的「宽度 = 窗口宽」。
 
 **③ 指针角度不要靠颜色阈值算**
 
@@ -635,4 +704,4 @@ HUD 是透明背景 + alpha。直接用 `.convert('RGB')` 会把透明区当成�
 
 ---
 
-*本文只管 HUD；设置窗口的版式、控件与交互以 `UI统一标准.md` 为准。*
+*本文只管 HUD；设置窗口的版式、控件与交互以 [`UI统一标准.md`](UI统一标准.md) 为准。*

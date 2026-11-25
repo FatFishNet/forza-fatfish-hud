@@ -218,6 +218,9 @@ public partial class App : Application
         if (_gpuOverlay.Start())
         {
             Diagnostics.Write("[启动] GPU 覆盖层已创建（D3D11 + Direct2D + DirectComposition）");
+            // 设置页的「清空自学习数据」要拿到 HudScene 持有的学习器；覆盖层没起来就保持 null，
+            // 那边会退化为只清磁盘文件。
+            AppServices.ClearShiftLearningAction = _gpuScene.ClearShiftLearning;
 
             _gpuVisibilityTimer = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher)
             {
@@ -282,6 +285,7 @@ public partial class App : Application
         }
         GlobalHotkeyService.ToggleHudRequested -= OnToggleHudRequested;
         GlobalHotkeyService.Clear();
+        AppServices.ClearShiftLearningAction = null;
         _overspeedSound?.Dispose();
         _overspeedSound = null;
         PerfRecorder.Shutdown();

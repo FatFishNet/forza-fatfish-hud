@@ -93,6 +93,17 @@ public static class HudModuleCatalog
         },
         new()
         {
+            Name = "行驶仪表 · 极简弧环",
+            BaseWidth = HudLayoutDefaults.RingWidth,
+            BaseHeight = HudLayoutDefaults.RingHeight,
+            AccentColor = "#FFC86BFF",
+            FillColor = "#33C86BFF",
+            IsVisible = static settings => settings.ShowPerformancePanel && settings.InstrumentStyle == HudInstrumentStyle.Ring,
+            Read = static profile => profile.RingLayout,
+            Write = static (profile, layout) => profile.RingLayout = layout,
+        },
+        new()
+        {
             Name = "轮胎与悬挂面板",
             BaseWidth = HudLayoutDefaults.TireWidth,
             BaseHeight = HudLayoutDefaults.TireHeight,

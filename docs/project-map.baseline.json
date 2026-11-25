@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "ForzaOverlay",
-  "snapshotAt": "2026-11-22T01:40:57+08:00",
+  "snapshotAt": "2026-11-26T02:54:02+08:00",
   "trackedRoots": [
     "src/",
     "app-dist-template/",
@@ -16,7 +16,7 @@
     "*.log",
     "docs/"
   ],
-  "fileCount": 88,
+  "fileCount": 93,
   "files": [
     {
       "path": ".gitattributes",
@@ -32,9 +32,9 @@
     },
     {
       "path": "AGENTS.md",
-      "lines": 415,
-      "bytes": 30046,
-      "sha256": "ca2f40ed2b5e6bd87b28b7fa6d69c98ef46e4ae6132bacc739a852db88bdc076"
+      "lines": 265,
+      "bytes": 19834,
+      "sha256": "7484e44eeaa3f87464f693cc061577557ad724b120f9025c547cabf0a5ee016f"
     },
     {
       "path": "app-dist-template/config/\u914d\u7f6e\u6587\u4ef6\u8bf4\u660e.txt",
@@ -50,9 +50,9 @@
     },
     {
       "path": "app-dist-template/docs/\u4f7f\u7528\u8bf4\u660e.txt",
-      "lines": 64,
-      "bytes": 2628,
-      "sha256": "99f605cb210a4c731be4bd278b2a395e992ddb73442854eef99ee6f27fccbf02"
+      "lines": 66,
+      "bytes": 2793,
+      "sha256": "a615bf442a91b45e8ffbc457ae38e6176a6f087b4304e6ad80a15fd5bda98589"
     },
     {
       "path": "app-dist-template/tools/\u6a21\u62df\u53d1\u9001\u9065\u6d4b\u6570\u636e.ps1",
@@ -92,9 +92,9 @@
     },
     {
       "path": "README.md",
-      "lines": 106,
-      "bytes": 5475,
-      "sha256": "65b66b0153bded3b673013d22649f32c2e7d093bdc17643a6db6567ed2570af0"
+      "lines": 124,
+      "bytes": 6173,
+      "sha256": "36629e5f7e76d19c8ae0c9fe6ae9cd5281bf3c7ce90d7220eaaa7e4fe757aa1d"
     },
     {
       "path": "src/ForzaOverlay.App/app.manifest",
@@ -110,9 +110,9 @@
     },
     {
       "path": "src/ForzaOverlay.App/App.xaml.cs",
-      "lines": 457,
-      "bytes": 14333,
-      "sha256": "aebeb31c9744469c204611300dc583154503e8dbcb415b0e9659272614366a55"
+      "lines": 461,
+      "bytes": 14652,
+      "sha256": "7aa8186f7ef1c72d01d1f3640c03c24fcb76a54418f8d0018208aaff42e3389e"
     },
     {
       "path": "src/ForzaOverlay.App/Assets/Fonts/D-DIN-Bold.ttf",
@@ -122,9 +122,21 @@
     },
     {
       "path": "src/ForzaOverlay.App/Assets/Fonts/LICENSE.txt",
-      "lines": 9,
-      "bytes": 263,
-      "sha256": "023074d3c93b2973f243e080fb706b7196932929d6e183148b6afe18c724e7b3"
+      "lines": 26,
+      "bytes": 775,
+      "sha256": "a2838a62dda432e6dff6066f2f830ef09a54301a7eac7f976783981ebc061d41"
+    },
+    {
+      "path": "src/ForzaOverlay.App/Assets/Fonts/Orbitron-Bold.ttf",
+      "lines": 0,
+      "bytes": 51900,
+      "sha256": "ed4acd72c6ef9ff4d1a2558ba72f2b85b411830a8aa2eb59f1c20b3a1127990c"
+    },
+    {
+      "path": "src/ForzaOverlay.App/Assets/Fonts/Rajdhani-SemiBold.ttf",
+      "lines": 0,
+      "bytes": 390340,
+      "sha256": "94bbd25a18ca665999feb05a537de9fd2b860dcfb78bbe9ca00270825bf235da"
     },
     {
       "path": "src/ForzaOverlay.App/Assets/Images/app.ico",
@@ -152,9 +164,9 @@
     },
     {
       "path": "src/ForzaOverlay.App/ForzaOverlay.App.csproj",
-      "lines": 49,
-      "bytes": 2175,
-      "sha256": "b6ea1c9b1351f5e8b82c9c385f209308638f0e913f176ce945a20398ec13f917"
+      "lines": 52,
+      "bytes": 2494,
+      "sha256": "6b761d993d41e3d99759faeda051837c20bf222bc3b8f00df03add600c29486e"
     },
     {
       "path": "src/ForzaOverlay.App/Rendering/AltezzaGlyphCache.cs",
@@ -182,9 +194,9 @@
     },
     {
       "path": "src/ForzaOverlay.App/Rendering/GhostPanel.cs",
-      "lines": 328,
-      "bytes": 13851,
-      "sha256": "31bedb31e9b5e11d4131f557e860af6e9b762a0ba3eb12c1771b1707bc6691a9"
+      "lines": 330,
+      "bytes": 14069,
+      "sha256": "3f9f55ce7bfd96418910df18a1c8fe971dfd7665225a1371aa2fb5cdf05fb6c8"
     },
     {
       "path": "src/ForzaOverlay.App/Rendering/GpuOverlayWindow.cs",
@@ -194,15 +206,15 @@
     },
     {
       "path": "src/ForzaOverlay.App/Rendering/HudScene.cs",
-      "lines": 920,
-      "bytes": 37738,
-      "sha256": "90527e390225a38efb8f7274db3eb14be2ea50de8848f212bc87fe58a3fd0749"
+      "lines": 991,
+      "bytes": 40463,
+      "sha256": "52c6a45fa45575309bfe3655e3306fdb9e627daed0d43650d4d2943afc9653c5"
     },
     {
       "path": "src/ForzaOverlay.App/Rendering/HudShared.cs",
-      "lines": 204,
-      "bytes": 5690,
-      "sha256": "17ddbce19dafc1e289f96cf8609ccba8926e6bc052e09c7ff2a262f27493ad32"
+      "lines": 364,
+      "bytes": 11799,
+      "sha256": "4cd2e57a034a86cd01d80bcc9165277b9ccd52aaba50392985c645687b79409d"
     },
     {
       "path": "src/ForzaOverlay.App/Rendering/Nfs19GlyphCache.cs",
@@ -217,6 +229,12 @@
       "sha256": "358c80a5b4405a3753fc64c0ff79c2b18e45f77dc8c47094a445058996d69356"
     },
     {
+      "path": "src/ForzaOverlay.App/Rendering/RingScene.cs",
+      "lines": 815,
+      "bytes": 32570,
+      "sha256": "8c5a5eedac1014f626a95c3398e19be74c673be25a442e1de00cb554a7c6618e"
+    },
+    {
       "path": "src/ForzaOverlay.App/Rendering/ShiftTreePanel.cs",
       "lines": 420,
       "bytes": 15819,
@@ -224,9 +242,9 @@
     },
     {
       "path": "src/ForzaOverlay.App/Services/AppServices.cs",
-      "lines": 173,
-      "bytes": 4864,
-      "sha256": "9dcb06c9032879afe216a4284c473f76ef96ded6cfda3356559a676026ae7db5"
+      "lines": 198,
+      "bytes": 5914,
+      "sha256": "c332376b138ee66d9283e92a0eb8e7e841e70289d7447de1075ca1d5cbfe3a27"
     },
     {
       "path": "src/ForzaOverlay.App/Services/AppStartupValidator.cs",
@@ -283,6 +301,18 @@
       "sha256": "d231ff656369615a461d5408dd38dc8a4212daf3ae35182d94b06a4f8d9a5616"
     },
     {
+      "path": "src/ForzaOverlay.App/Ui/ConfirmWindow.xaml",
+      "lines": 52,
+      "bytes": 1941,
+      "sha256": "a3f3439c58c652e3c0ac855ec0962817c7d153488be6fb835ef0856d06e578b6"
+    },
+    {
+      "path": "src/ForzaOverlay.App/Ui/ConfirmWindow.xaml.cs",
+      "lines": 28,
+      "bytes": 774,
+      "sha256": "291cef8dc4e2bef984a43346a399c2990aa2b25a0b6b16588749910bca7cc3d2"
+    },
+    {
       "path": "src/ForzaOverlay.App/Ui/HudLayoutWindow.xaml",
       "lines": 68,
       "bytes": 2651,
@@ -296,9 +326,9 @@
     },
     {
       "path": "src/ForzaOverlay.App/Ui/HudModuleCatalog.cs",
-      "lines": 128,
-      "bytes": 5519,
-      "sha256": "a5d9578a3797b009a56178626d2b5c1705d64ce83c6475e97f55b293993fe18d"
+      "lines": 139,
+      "bytes": 6052,
+      "sha256": "71687f825a86d30c5ad6c8037665f18cfcf040146d23e27067160e0c5423bdb9"
     },
     {
       "path": "src/ForzaOverlay.App/Ui/RpmColorScale.cs",
@@ -308,15 +338,15 @@
     },
     {
       "path": "src/ForzaOverlay.App/Ui/SettingsWindow.xaml",
-      "lines": 1318,
-      "bytes": 89670,
-      "sha256": "4cbc518435f48b7f2fae086df8856a48a3c6287d86ca2c72935c98d952142aa6"
+      "lines": 1344,
+      "bytes": 90673,
+      "sha256": "7ea9dbd900ebb47cf2bd88769ce623a97589f7e4fa903e1ac66c24fe593f91f3"
     },
     {
       "path": "src/ForzaOverlay.App/Ui/SettingsWindow.xaml.cs",
-      "lines": 1197,
-      "bytes": 36768,
-      "sha256": "ef5769dde114ec1d8603806e9b4f700f858c7c5caff7e9acbee3cc04c8c95768"
+      "lines": 1239,
+      "bytes": 38396,
+      "sha256": "5ba01bf9e7c2e05f92add49fa38822c5da7f56f7073ec18f523f3a2800b9360f"
     },
     {
       "path": "src/ForzaOverlay.App/Ui/UpdateWindow.xaml",
@@ -344,21 +374,21 @@
     },
     {
       "path": "src/ForzaOverlay.Core/Configuration/HudInstrumentStyle.cs",
-      "lines": 15,
-      "bytes": 369,
-      "sha256": "db20a9942cc8dac6393c95da017a987e799bee92f6c26bd4e84ac43e9f6daf7e"
+      "lines": 18,
+      "bytes": 512,
+      "sha256": "2d9cbfa79649ba7279fd3b9e34b5354e71adeccd00b5882276c200e59381c688"
     },
     {
       "path": "src/ForzaOverlay.Core/Configuration/HudLayoutDefaults.cs",
-      "lines": 110,
-      "bytes": 3939,
-      "sha256": "d198a0dd25458150545861f3d73087bda963f90ba1cd76a480892221082707a2"
+      "lines": 122,
+      "bytes": 4530,
+      "sha256": "a3dd64760a3171101015a94a469af8f949653032f054878840f3923d87572299"
     },
     {
       "path": "src/ForzaOverlay.Core/Configuration/HudLayoutProfile.cs",
-      "lines": 22,
-      "bytes": 930,
-      "sha256": "898c03bef72806bc8e5f71f8f07c145d178ac30c9db6f823ea7cc2d42500bf3a"
+      "lines": 24,
+      "bytes": 1018,
+      "sha256": "3082968a9b32ef7396a0fec1209e4e03a26d37cd8376c334e4d8653fb1f3ea65"
     },
     {
       "path": "src/ForzaOverlay.Core/Configuration/HudModuleLayout.cs",
@@ -398,9 +428,9 @@
     },
     {
       "path": "src/ForzaOverlay.Core/Learning/ShiftPointLearner.cs",
-      "lines": 784,
-      "bytes": 30956,
-      "sha256": "e6dd43f427991149258c3d5445eb6381231bac264ec3977d3ab6abe99b0a095e"
+      "lines": 818,
+      "bytes": 32405,
+      "sha256": "90213ec4475270b8f0bfbb1c9229c0e1d96af3095c1426b6722640d1e2d11c2c"
     },
     {
       "path": "src/ForzaOverlay.Core/Monitoring/ForzaGameKind.cs",
@@ -464,9 +494,9 @@
     },
     {
       "path": "THIRD-PARTY-NOTICES.txt",
-      "lines": 21,
-      "bytes": 815,
-      "sha256": "188ae7ec0c256e919208c87a55e7a4e9086870661fe4f1f40945cdc80f1efb00"
+      "lines": 32,
+      "bytes": 1265,
+      "sha256": "dbf5d416c40a37bc4f161762055c4a0623c79e1f4185f704739ad7fae6c7619c"
     },
     {
       "path": "tools/colors.py",
@@ -506,9 +536,9 @@
     },
     {
       "path": "tools/README.md",
-      "lines": 264,
-      "bytes": 10117,
-      "sha256": "6f2f03537bdac49dfa7c3beb79e46e724259a1f779f1f06d38baf33422dd557d"
+      "lines": 284,
+      "bytes": 11465,
+      "sha256": "322c417c0aeb6123bef6905f274b32814aba819b6422859ea38228e1e1d15887"
     },
     {
       "path": "tools/render.py",
@@ -524,9 +554,9 @@
     },
     {
       "path": "tools/snapshot/Program.cs",
-      "lines": 299,
-      "bytes": 10230,
-      "sha256": "4f56b69564a051c27b7904cd6e61c40436b9d6230c3f3336c1e8564404ebeca5"
+      "lines": 370,
+      "bytes": 13150,
+      "sha256": "195a96edb8f2291e1ab847c94a990b2a5e611a0121f4e567514aed29904d60b5"
     },
     {
       "path": "tools/snapshot/Snapshot.csproj",
@@ -536,9 +566,9 @@
     },
     {
       "path": "tools/snapshot/SnapshotOptions.cs",
-      "lines": 312,
-      "bytes": 11610,
-      "sha256": "cf8c63dd886683e2986fdbd43d0efbfc680701843f101928ea51ed02d21bf032"
+      "lines": 315,
+      "bytes": 11759,
+      "sha256": "250a3377dde9158748087021888f1844386dcd2cac1fbd99863e7270b509263d"
     },
     {
       "path": "tools/trace.py",

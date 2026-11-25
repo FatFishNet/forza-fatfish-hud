@@ -80,8 +80,13 @@ python tools/colors.py a.png --premultiplied
 ## snapshot —— 离屏快照（本项目专属）
 
 ```bash
-dotnet run --project tools/snapshot --style <altezza|nfs19> -o <输出.png> [参数]
+dotnet run --project tools/snapshot --style <altezza|nfs19|es|ring> -o <输出.png> [参数]
 ```
+
+**工程约束**：独立 csproj、**不进 `.sln`**，主程序的编译与发布完全不受影响。
+它靠 `InternalsVisibleTo("snapshot")` 访问 `AltezzaScene` / `Nfs19Scene` / `EsScene` / `RingScene`
+等 internal 类 —— **不要把场景类改成 public 来图省事**。
+经典 / GHOST / SHIFT TREE 的绘制写在 `HudScene` 内部、依赖 `AppServices`，暂未接入。
 
 ### 为什么视口等于画布
 
@@ -93,7 +98,8 @@ snapshot 把**视口设成和输出画布一致**，于是 `WidthRatio=1` 时 `s
 
 | 参数 | 说明 | 默认 |
 |---|---|---|
-| `--style` | `altezza` / `nfs19` | `altezza` |
+| `--style` | `altezza` / `nfs19` / `es` / `ring` | `altezza` |
+| `--preset` | `extremes`：一次渲染 8 个边界用例 | 无 |
 | `-o, --output` | 输出 PNG | 必填 |
 | `--width` / `--height` | 输出尺寸 | 1100 × 760 |
 | `--rpm` | 当前转速 | 6500 |
@@ -116,7 +122,12 @@ dotnet run --project tools/snapshot --style altezza --rpm 7800 --speed 500 --gea
 
 # 负压（进气真空）：验证增压小表归零策略
 dotnet run --project tools/snapshot --style altezza --boost -0.4 -o vac.png
+
+# 边界批量：一次跑 8 个极端用例（速度 0/999、档位 R/10、增压 ±3、转速 0/满）
+dotnet run --project tools/snapshot --preset extremes --style ring --width 312 --height 330
 ```
+
+改完绘制代码先跑一遍 `--preset extremes`，比逐个手敲参数快，也不会漏掉边界。
 
 ---
 
@@ -251,7 +262,16 @@ python tools/render.py page.html --svg out.svg --svg-id cluster --wait 2500
 - `arc` 数齿会漏检 1–3 个（齿尖抗锯齿会让最细处断档）。咬地鲨实测 89/90。
   **要精确数齿，用生成的 C# 源码数，不要从截图数。**
 - `blobs` 用纯 Python 走栈，大区域会慢；加 `--region` 限定范围。
-- snapshot 目前只支持 `altezza` 与 `nfs19` 两种样式，其余（经典 / GHOST / SHIFT TREE）的绘制代码写在 `HudScene` 内部、依赖 `AppServices.CurrentSettings`，暂未接入。
+- snapshot 支持 `altezza` / `nfs19` / `es` / `ring` 四种样式；经典 / GHOST / SHIFT TREE 的绘制代码写在 `HudScene` 内部、依赖 `AppServices.CurrentSettings`，暂未接入。
+
+## 两条测量原则
+
+- **配色用主色分析（`colors.py`），不要用像素差率** —— 3px 的色差在整体差异率里占比极低，
+  但视觉上很刺眼，看差率永远看不出配色错了。
+- **比对前两张图必须尺寸一致**，否则会被 scaled 或差异率虚高，没有参考价值。
+
+另外量文字墨迹时：彩色元素（红指针、金刻度）会被亮度阈值算进墨迹，造成「文字被拉宽」的假象；
+按颜色通道过滤（如 `r>150 & g>110 & b>60`）或先排除红色，测量窗口也要给足余量。
 
 ## 与 design 项目的关系
 

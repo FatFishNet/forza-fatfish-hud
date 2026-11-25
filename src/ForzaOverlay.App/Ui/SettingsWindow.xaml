@@ -864,13 +864,39 @@
                                         <Run Text="学习结果保存于程序目录 data\shift-learning.json。" />
                                     </TextBlock>
                                 </StackPanel>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,26,0,0">
-                                    <TextBlock x:Name="RedlineCalibrationHint" Text="✓ 已生效" FontSize="12" Foreground="{StaticResource OkBrush}" VerticalAlignment="Center" Margin="0,0,12,0" Opacity="0" />
-                                    <ToggleButton x:Name="RedlineCalibrationSwitch"
-                                                  Style="{StaticResource ToggleSwitchStyle}"
-                                                  Checked="RedlineCalibrationSwitch_Changed"
-                                                  Unchecked="RedlineCalibrationSwitch_Changed" />
-                                </StackPanel>
+                                <!-- 用 Grid 而不是 StackPanel：开关要贴顶、清档按钮要贴底，
+                                     而底边锚定才能让它与左侧描述的最后一行（data\shift-learning.json 那行）水平对齐。
+                                     左侧描述是 VerticalAlignment=Center + 上下 margin 22，内容撑满整行，
+                                     所以贴底即等于贴住最后一行文本的底边。 -->
+                                <Grid Grid.Column="1" Margin="0,26,0,16">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <TextBlock x:Name="RedlineCalibrationHint" Text="✓ 已生效" FontSize="12" Foreground="{StaticResource OkBrush}" VerticalAlignment="Center" Margin="0,0,12,0" Opacity="0" />
+                                        <ToggleButton x:Name="RedlineCalibrationSwitch"
+                                                      Style="{StaticResource ToggleSwitchStyle}"
+                                                      Checked="RedlineCalibrationSwitch_Changed"
+                                                      Unchecked="RedlineCalibrationSwitch_Changed" />
+                                    </StackPanel>
+                                    <!-- 清档出口：脏数据会让某辆车永久学不到新断油点（car 1124 的 MaxWotRpm 死锁），
+                                         代码里解不开，只能把清档能力交给用户。
+                                         下边距 16 = 左侧 22 减去 (按钮 34 − 行高 22) / 2，让按钮中心落在最后一行的中心线上。 -->
+                                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                        <TextBlock x:Name="RedlineClearHint"
+                                                   Text="✓ 旧数据已清空"
+                                                   FontSize="12"
+                                                   Foreground="{StaticResource OkBrush}"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,12,0"
+                                                   Opacity="0" />
+                                        <Button x:Name="ClearLearningButton"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                Content="清空自学习数据"
+                                                Click="ClearLearningButton_Click" />
+                                    </StackPanel>
+                                </Grid>
                             </Grid>
 
                             <Grid x:Name="ShiftHintRow" MinHeight="92" Visibility="Collapsed">

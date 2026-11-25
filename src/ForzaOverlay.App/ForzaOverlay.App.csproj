@@ -7,7 +7,7 @@
     <AssemblyName>ForzaFatFishHUD</AssemblyName>
     <Product>Forza Fat Fish HUD</Product>
     <AssemblyTitle>Forza Fat Fish HUD</AssemblyTitle>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -25,6 +25,9 @@
 
   <ItemGroup>
     <None Update="Assets\Fonts\D-DIN-Bold.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <!-- 极简弧环（环表）专用：档位/车速大字用 Orbitron，小字标签用 Rajdhani。两者都是 OFL 1.1。 -->
+    <None Update="Assets\Fonts\Orbitron-Bold.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Fonts\Rajdhani-SemiBold.ttf" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Assets\Fonts\LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Assets\Images\app.ico" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Assets\Images\whale-maid.jpg" CopyToOutputDirectory="PreserveNewest" />
