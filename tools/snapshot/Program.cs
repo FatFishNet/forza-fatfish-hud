@@ -272,8 +272,27 @@ internal static class Program
                 break;
             }
 
+            case "driftchain":
+            {
+                using DriftChainScene scene = new(dwrite, customFonts);
+                scene.Draw(
+                    target,
+                    layout,
+                    packet,
+                    hasPacket: true,
+                    learner,
+                    options.MaxRpm,
+                    useLearnedRedline: false,
+                    viewportX: 0,
+                    viewportY: 0,
+                    viewportWidth: viewportWidth,
+                    viewportHeight: viewportHeight,
+                    deltaSeconds: 0);
+                break;
+            }
+
             default:
-                throw new ArgumentException($"不支持的样式：{options.Style}（可用：altezza / nfs19 / es / ring）");
+                throw new ArgumentException($"不支持的样式：{options.Style}（可用：altezza / nfs19 / es / ring / driftchain）");
         }
     }
 

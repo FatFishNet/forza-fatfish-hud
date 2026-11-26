@@ -104,6 +104,17 @@ public static class HudModuleCatalog
         },
         new()
         {
+            Name = "行驶仪表 · 漂移锁链",
+            BaseWidth = HudLayoutDefaults.DriftChainWidth,
+            BaseHeight = HudLayoutDefaults.DriftChainHeight,
+            AccentColor = "#FF4DE3FF",
+            FillColor = "#334DE3FF",
+            IsVisible = static settings => settings.ShowPerformancePanel && settings.InstrumentStyle == HudInstrumentStyle.DriftChain,
+            Read = static profile => profile.DriftChainLayout,
+            Write = static (profile, layout) => profile.DriftChainLayout = layout,
+        },
+        new()
+        {
             Name = "轮胎与悬挂面板",
             BaseWidth = HudLayoutDefaults.TireWidth,
             BaseHeight = HudLayoutDefaults.TireHeight,

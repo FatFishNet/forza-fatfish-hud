@@ -61,6 +61,7 @@ public sealed class HudScene : IDisposable
     private AltezzaScene? _altezzaScene;
     private EsScene? _esScene;
     private RingScene? _ringScene;
+    private DriftChainScene? _driftChainScene;
 
     /// <summary>
     /// 最后一次有效的最大转速。游戏在菜单 / 车库 / 暂停时不发该值（为 0），
@@ -145,6 +146,7 @@ public sealed class HudScene : IDisposable
             _altezzaScene = new AltezzaScene(_dwrite);
             _esScene = new EsScene(_dwrite);
             _ringScene = new RingScene(_dwrite, _customFonts);
+            _driftChainScene = new DriftChainScene(_dwrite, _customFonts);
 
             // 经典面板增压列的定槽：构造期按字体实测一次，之后每帧直接用。
             _classicBoostCells = HudDraw.BuildSignedCells(_dwrite, _classicValueFormat, HudDraw.BoostDecimals, 19f);
@@ -371,6 +373,23 @@ public sealed class HudScene : IDisposable
             _ringScene?.Draw(
                 target,
                 settings.ActiveLayout.RingLayout,
+                _packet,
+                _hasPacket,
+                _shiftLearner,
+                EffectiveMaxRpm(),
+                settings.EnableRedlineCalibration,
+                viewportX,
+                viewportY,
+                viewportWidth,
+                viewportHeight,
+                delta);
+        }
+
+        if (settings.ShowPerformancePanel && settings.InstrumentStyle == HudInstrumentStyle.DriftChain)
+        {
+            _driftChainScene?.Draw(
+                target,
+                settings.ActiveLayout.DriftChainLayout,
                 _packet,
                 _hasPacket,
                 _shiftLearner,
@@ -965,6 +984,7 @@ public sealed class HudScene : IDisposable
         _altezzaScene?.Dispose();
         _esScene?.Dispose();
         _ringScene?.Dispose();
+        _driftChainScene?.Dispose();
         _shiftTreePanel?.Dispose();
         _ghostPanel?.Dispose();
         _textLayoutCache.Dispose();

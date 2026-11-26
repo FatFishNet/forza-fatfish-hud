@@ -41,6 +41,11 @@ public static class HudLayoutDefaults
     public const double RingWidth = 312;
     public const double RingHeight = 330;
 
+    // 漂移锁链：单表圆形（同批第 5 款）。增压读数上移 20px 后包围盒为 294×279，
+    // 四边各留 5px 得 304×289（内部坐标仍是原型原值，靠 ContentShift(-40,-36) 平移）。
+    public const double DriftChainWidth = 304;
+    public const double DriftChainHeight = 289;
+
     public const double MinWidthRatio = 0.03;
     public const double MaxWidthRatio = 1.0;
 
@@ -118,5 +123,18 @@ public static class HudLayoutDefaults
     public static HudModuleLayout RingDefault()
     {
         return new HudModuleLayout { X = 0.715, Y = 0.42, WidthRatio = 0.24 };
+    }
+
+    // 漂移锁链基准 304×289，比极简弧环略小。0.23 在 1920 宽下约 442px。
+    //
+    // ⚠️ **Y 不能凭感觉写**：Y 只定位顶边，而模块高度是随宽度缩放的 ——
+    //   屏上下边缘 = Y + WidthRatio × (视口宽/视口高) × 基准高/基准宽
+    //   = Y + 0.23 × 1.778 × (289/304) = Y + 0.389（16:9）
+    // 初版误取 Y=0.70 导致下边缘 1.089，底部被切掉 8.9%（用户实机发现跑出屏幕）。
+    // 安全上限 = 1 − 0.389 = 0.611；这里取 0.58，下边缘 0.969，
+    // 与 NFS19(0.974) / 咬地鲨(0.971) / GHOST(0.967) 同档。
+    public static HudModuleLayout DriftChainDefault()
+    {
+        return new HudModuleLayout { X = 0.715, Y = 0.58, WidthRatio = 0.23 };
     }
 }

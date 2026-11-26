@@ -112,6 +112,31 @@ public sealed class ShiftPointLearner
     private const int MaxShiftSamples = 60;
     private const int SaveIntervalMs = 5000;
 
+    /// <summary>
+    /// 升挡样本入库前允许偏离已有中位数的比例。
+    /// <para>
+    /// **不能用「档位静止时长」来挡假样本**：10 速变速箱 1 秒内可以连升 4~5 档，
+    /// 每档只停留 200~250 ms，任何时长门槛都会把这类正常升挡整个排除掉
+    /// （实测历史日志里最快一次连升是 405 ms，仍远低于常见的 300ms 门槛假设）。
+    /// </para>
+    /// <para>
+    /// 改用**数据自洽性**：正常车的升挡点极差一般 &lt;2%，偏离主群 3% 以上的基本都是
+    /// 假样本 —— 跨档降档后紧接回位（car 1124：`5→3` 把转速拖到 6982，34ms 后 `3→4`
+    /// 被记成升挡）、驱动轮打滑抬转速等。这类样本连 2 条就能把「最近 3 条」的中位数
+    /// 抬过真实换挡点，红区整段跑到换挡点之后，表现为「自动挡永远摸不到红区」。
+    /// </para>
+    /// </summary>
+    private const double ShiftOutlierTolerance = 0.03;
+
+    /// <summary>已有样本少于这个数时不做偏离判断（样本太少，中位数本身不可靠）。</summary>
+    private const int ShiftOutlierMinSamples = 3;
+
+    /// <summary>
+    /// 连续这么多次偏离旧中位数 → 判定为「换调校 / 换车」而不是脏数据，
+    /// 清空旧样本用新样本重建。与 <see cref="CutRelearnDeviationCount"/> 同一套路子。
+    /// </summary>
+    private const int ShiftRelearnDeviationCount = 5;
+
     private sealed class GearShiftSample
     {
         public int Gear { get; set; }
@@ -137,6 +162,13 @@ public sealed class ShiftPointLearner
 
         /// <summary>该车已见最高档位；最高档不再提示升挡。</summary>
         public int MaxGearSeen { get; set; }
+
+        /// <summary>
+        /// 升挡样本连续偏离旧中位数的次数。
+        /// 连续 <see cref="ShiftRelearnDeviationCount"/> 次 → 判定换调校/换车，清空重建。
+        /// 落盘保存，重启后不丢。
+        /// </summary>
+        public int ShiftDeviationCount { get; set; }
 
         public List<GearShiftSample> Shifts { get; set; } = [];
     }
@@ -724,6 +756,18 @@ public sealed class ShiftPointLearner
         AddShiftSample(profile, _lastGear, _lastRpm);
     }
 
+    /// <summary>
+    /// 升挡样本入库，带**数据自洽性**过滤。
+    /// <para>
+    /// 只靠「档位变化方向」挡不住脏样本：car 1124 实测 `5→3`（跨档降档）把转速拖到 6982，
+    /// 34 ms 后 `3→4` 完美符合「升一档」，用的还是降档瞬间的转速。
+    /// 但**不能用时长门槛**去挡 —— 10 速箱 1 秒连升 4~5 档属正常，每档只停 200~250 ms。
+    /// </para>
+    /// <para>
+    /// 所以改为看「新样本离已有主群多远」：正常车升挡点极差 &lt;2%，
+    /// 偏 3% 以上的基本都是假的。连续 5 次偏离才认定是真换调校，此时清空重建。
+    /// </para>
+    /// </summary>
     private static void AddShiftSample(ShiftPointProfile profile, int gear, double rpm)
     {
         // 1 档容易打滑，换挡点不可靠，不参与统计。
@@ -743,6 +787,31 @@ public sealed class ShiftPointLearner
             return;
         }
 
+        // 偏离过滤：样本足够多时，离主群太远的一律不入库。
+        if (profile.Shifts.Count >= ShiftOutlierMinSamples)
+        {
+            double median = Median(profile.Shifts.Select(sample => sample.Rpm).ToList());
+            if (median > 0 && Math.Abs(rpm - median) > median * ShiftOutlierTolerance)
+            {
+                profile.ShiftDeviationCount++;
+
+                // 连续多次偏离 → 不是脏数据，是换了调校 / 换了齿比，旧样本作废重建。
+                if (profile.ShiftDeviationCount >= ShiftRelearnDeviationCount)
+                {
+                    profile.Shifts.Clear();
+                    profile.Shifts.Add(new GearShiftSample { Gear = gear, Rpm = rpm });
+                    profile.ShiftDeviationCount = 0;
+                    Diagnostics.Write($"[换挡学习] 换挡点重建: {rpm:F0} RPM（连续偏离旧中位数 {median:F0}）");
+                    return;
+                }
+
+                Diagnostics.Write(
+                    $"[换挡学习] 丢弃偏离样本 {gear}档={rpm:F0}: 偏离中位 {median:F0} 超过 {ShiftOutlierTolerance * 100:F0}%");
+                return;
+            }
+        }
+
+        profile.ShiftDeviationCount = 0;
         profile.Shifts.Add(new GearShiftSample { Gear = gear, Rpm = rpm });
         if (profile.Shifts.Count > MaxShiftSamples)
         {

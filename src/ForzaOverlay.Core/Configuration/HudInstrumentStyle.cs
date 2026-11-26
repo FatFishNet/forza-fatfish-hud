@@ -15,4 +15,7 @@ public enum HudInstrumentStyle
 
     /// <summary>极简弧环（FH4 极简语言：白色细弧 + 中央档位，超红区转紫并呼吸辉光）。</summary>
     Ring = 6,
+
+    /// <summary>漂移锁链（FH5：紫→青渐变转速弧 + 红区斜纹，中央档位/车速 + 底部增压弧）。</summary>
+    DriftChain = 7,
 }

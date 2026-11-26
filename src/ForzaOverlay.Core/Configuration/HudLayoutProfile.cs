@@ -16,6 +16,8 @@ public sealed class HudLayoutProfile
 
     public HudModuleLayout RingLayout { get; set; } = HudLayoutDefaults.RingDefault();
 
+    public HudModuleLayout DriftChainLayout { get; set; } = HudLayoutDefaults.DriftChainDefault();
+
     public HudModuleLayout TireLayout { get; set; } = HudLayoutDefaults.TireDefault();
 
     public HudModuleLayout PerfLayout { get; set; } = HudLayoutDefaults.PerfDefault();

@@ -80,11 +80,11 @@ python tools/colors.py a.png --premultiplied
 ## snapshot —— 离屏快照（本项目专属）
 
 ```bash
-dotnet run --project tools/snapshot --style <altezza|nfs19|es|ring> -o <输出.png> [参数]
+dotnet run --project tools/snapshot --style <altezza|nfs19|es|ring|driftchain> -o <输出.png> [参数]
 ```
 
 **工程约束**：独立 csproj、**不进 `.sln`**，主程序的编译与发布完全不受影响。
-它靠 `InternalsVisibleTo("snapshot")` 访问 `AltezzaScene` / `Nfs19Scene` / `EsScene` / `RingScene`
+它靠 `InternalsVisibleTo("snapshot")` 访问 `AltezzaScene` / `Nfs19Scene` / `EsScene` / `RingScene` / `DriftChainScene`
 等 internal 类 —— **不要把场景类改成 public 来图省事**。
 经典 / GHOST / SHIFT TREE 的绘制写在 `HudScene` 内部、依赖 `AppServices`，暂未接入。
 
@@ -98,7 +98,7 @@ snapshot 把**视口设成和输出画布一致**，于是 `WidthRatio=1` 时 `s
 
 | 参数 | 说明 | 默认 |
 |---|---|---|
-| `--style` | `altezza` / `nfs19` / `es` / `ring` | `altezza` |
+| `--style` | `altezza` / `nfs19` / `es` / `ring` / `driftchain` | `altezza` |
 | `--preset` | `extremes`：一次渲染 8 个边界用例 | 无 |
 | `-o, --output` | 输出 PNG | 必填 |
 | `--width` / `--height` | 输出尺寸 | 1100 × 760 |
@@ -262,7 +262,7 @@ python tools/render.py page.html --svg out.svg --svg-id cluster --wait 2500
 - `arc` 数齿会漏检 1–3 个（齿尖抗锯齿会让最细处断档）。咬地鲨实测 89/90。
   **要精确数齿，用生成的 C# 源码数，不要从截图数。**
 - `blobs` 用纯 Python 走栈，大区域会慢；加 `--region` 限定范围。
-- snapshot 支持 `altezza` / `nfs19` / `es` / `ring` 四种样式；经典 / GHOST / SHIFT TREE 的绘制代码写在 `HudScene` 内部、依赖 `AppServices.CurrentSettings`，暂未接入。
+- snapshot 支持 `altezza` / `nfs19` / `es` / `ring` / `driftchain` 五种样式；经典 / GHOST / SHIFT TREE 的绘制代码写在 `HudScene` 内部、依赖 `AppServices.CurrentSettings`，暂未接入。
 
 ## 两条测量原则
 

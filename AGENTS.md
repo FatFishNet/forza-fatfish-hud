@@ -28,7 +28,7 @@ src/ForzaOverlay.App/          WPF 界面层
     HudShared.cs               画刷/文字布局缓存、档位格式化、绘制与定槽原语
     Nfs19Scene.cs / Nfs19GlyphCache.cs       仿NFS19 主表 + 增压小表 / 字形几何
     AltezzaScene.cs / AltezzaGlyphCache.cs   咬地鲨三表 1054×722 / LEXUS 字标轮廓
-    EsScene.cs / RingScene.cs                ES 500×500 / 极简弧环 312×330
+    EsScene.cs / RingScene.cs / DriftChainScene.cs   ES 500×500 / 极简弧环 312×330 / 漂移锁链 304×289
     BoostPresence.cs           无增压车检测（自吸车的 Boost 字段会漂移）
   Ui/                          SettingsWindow / UpdateWindow / ConfirmWindow /
                                HudLayoutWindow / HudModuleCatalog
@@ -117,25 +117,28 @@ dotnet build .\ForzaOverlay.sln -v minimal -m:1
 | 行驶仪表 · 咬地鲨 | 1054 × 722 | 三表集群；内部按原型 1440×720 写，靠 ContentShift 平移 |
 | 行驶仪表 · ES | 500 × 500 | 原型 1000×1000，缩放系数 **0.47**（不是 0.5）；圆心固定 250 |
 | 行驶仪表 · 极简弧环 | 312 × 330 | 内部坐标 = 原型 **1:1**，靠 ContentShift(-34,-20) 平移 |
+| 行驶仪表 · 漂移锁链 | 304 × 289 | 原型 1:1 + ContentShift(-40,-36)；弧紫(268)→青(185) 逐段插值，红区斜纹 |
 | 轮胎与悬挂 | 220 × 212 | 2×2 四格（已移除中心差速图） |
 | HUD 资源占用 | 200 × 140 | 帧率 / CPU / 内存 / GPU / 显存 |
 
 - 缩放**必须用基准宽高常量**，不能用 `ActualWidth`（切全屏瞬时为 0 会导致缩放爆炸）
+  - ⚠️ **Y 只定位顶边，不定位底边**：下边缘 = `Y + WR × (视口宽/视口高) × 基准高/基准宽`。
+    新模块的默认 Y 必须按这个式子倒推后写进注释，别凭感觉取整
 - 面板内元素尺寸固定，禁止让数值宽度影响布局（会抖动）
 - 转速条配色统一走 `Ui/RpmColorScale`（<76% 基础色 → 76~82% 基础→黄 `#FFB020` → 82~90% 全黄
   → 90~94% 黄→红 `#FF3B30` → ≥94% 全红）。新增带转速条的面板必须调用它。
-  **四个例外**（不走 RpmColorScale）：SHIFT TREE 固定三段（73.3% / 86.7%）、咬地鲨三色制、
-  ES 点阵青→红两态、极简弧环超红区转紫 `#c86bff`
+  **五个例外**（不走 RpmColorScale）：SHIFT TREE 固定三段（73.3% / 86.7%）、咬地鲨三色制、
+  ES 点阵青→红两态、极简弧环超红区转紫 `#c86bff`、漂移锁链紫→青渐变 + 红区斜纹
 - 踏板四色：离合紫 `#B388FF`（半透明）/ 油门蓝 `#4FC3F7` / 刹车红 `#F44336` / 手刹黄 `#FFEB3B`
 - 轮胎颜色来自 `TireVisualEvaluator`：填充=胎温，描边=抓地（打滑黄、失控红闪）
 - HUD 面板全部由 `Rendering/HudScene.cs` 用 Direct2D 绘制，**不要再新增 WPF HUD 窗口**
 - GPU 场景坐标：`scale = WidthRatio × 客户区宽 / 基准宽`，再加客户区偏移
-- 数字定槽：SHIFT TREE 逐位 33 / 36，GHOST 速度 63 槽位，极简弧环速度 23 槽位
+- 数字定槽：SHIFT TREE 逐位 33 / 36，GHOST 速度 63 槽位，极简弧环速度 23 槽位，漂移锁链速度 22 槽位
 - **增压数值显示标准（全项目，2026-11-26 用户定）**：两位小数（`0.00` 也显示）、正数带 `+`、
   字符数恒为 5、逐格定槽防跳动。位数常量唯一来源 `HudDraw.BoostDecimals`；
   格式化走 `HudDraw.Signed()`（内部先消 float 误差再截断 —— `-0.35` 存成 `-0.34999999…`，
   直接截断会变成 `-0.34`）；格宽用 `HudDraw.BuildSignedCells()`。
-  已有三处：极简弧环、GHOST、经典仪表「增压」行
+  已有四处：极简弧环、漂移锁链、GHOST、经典仪表「增压」行
 - 文字：D2D `TextAntialiasMode = Grayscale`；GHOST 速度数字用 D-DIN 字形轮廓 + 2px 描边
 
 ## 7. 运行时权限经验
@@ -232,7 +235,7 @@ dotnet run --project tools/snapshot --preset extremes --style altezza --width 10
 - 靠 `InternalsVisibleTo("snapshot")` 访问 internal 类，**不要把场景类改 public 图省事**
 - 数据全部确定值（`--rpm` `--speed` `--gear` `--boost`），同命令永远同图才能对比
 - **视口必须等于输出画布**：视口更大时会放大裁切，相等时 `scale` 才恰为 1
-- 支持 `altezza` / `nfs19` / `es` / `ring`；经典 / GHOST / SHIFT TREE 在 `HudScene` 内、依赖
+- 支持 `altezza` / `nfs19` / `es` / `ring` / `driftchain`；经典 / GHOST / SHIFT TREE 在 `HudScene` 内、依赖
   `AppServices`，暂未接入
 - Python 用 DSH 自带解释器（`%USERPROFILE%\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe`），
   PATH 里的 `WindowsApps\python.exe` 是商店占位符不能用
@@ -243,8 +246,9 @@ dotnet run --project tools/snapshot --preset extremes --style altezza --width 10
 
 完整推导见 `docs/HUD模块开发说明.md` 与 `tools/README.md`，这里只列结论。
 
-- **角度制两套勿混**：咬地鲨 / ES / 极简弧环用 `cos/sin`（0°=正右）；仿NFS19 / SHIFT TREE 用
+- **角度制两套勿混**：咬地鲨 / ES / 极简弧环 / 漂移锁链用 `cos/sin`（0°=正右）；仿NFS19 / SHIFT TREE 用
   `sin/-cos`（0°=正上）。混了指针整体偏，编译零错误
+- **原型写死值是配它那份固定量程的，别当常量搬**：量程自适应后，量程派生的数量（刻度、标签、分段、红区位置）都按实际量程现算
 - **`Matrix3x2` 行向量约定**：`A * B` = 先 A 后 B。绕点旋转必须 `T(-P) * R * T(+P)`，写反会把对象
   甩出画布（ES 指针曾整根消失，扫描才发现 0 像素）；沿弧排文字字顶朝圆心用 `θ = a - 90°`
 - **缩放系数与画布坐标分开算**：半径/字号乘系数，**圆心不乘**。ES 真实系数 0.47（`.wrap` 只占 94%），
