@@ -323,7 +323,7 @@ internal sealed class RingScene : IDisposable
         float top = viewportY + (float)(layout.Y * viewportHeight);
 
         float spanRpm = ResolveTachoSpan(maxRpm);
-        float redlineRatio = ResolveRedlineRatio(learner, packet, hasPacket, useLearnedRedline);
+        float redlineRatio = ResolveRedlineRatio(learner, packet, hasPacket, maxRpm, spanRpm, useLearnedRedline);
 
         float rpmRatio = hasPacket ? Math.Clamp(packet.CurrentEngineRpm / spanRpm, 0f, 1f) : 0f;
         float boostValue = hasPacket ? Math.Clamp(packet.BoostBar, BoostMin, BoostMax) : 0f;
@@ -356,19 +356,31 @@ internal sealed class RingScene : IDisposable
         return thousands * 1000f;
     }
 
-    /// <summary>红区起点比例：开启校正时跟学习值，否则回退 75%（与其余单表一致）。</summary>
+    /// <summary>
+    /// 红区起点比例（**占表盘量程 spanRpm**，可直接当弧比例用）。
+    /// <para>
+    /// learner 返回的是「占 maxRpm」的比例，必须先乘 maxRpm 换成真实转速，再除以表盘量程 spanRpm。
+    /// 曾直接把 learner 的返回值当弧比例 —— 两个分母不同（maxRpm 通常是整千，spanRpm 是
+    /// 千转向上取整，如 9500 → 10000），红区会被抬高 (span−max)/max ≈ 5%，
+    /// 表现为「红区起点偏右、红区带比咬地鲨窄」。2026-11-28 用户实机对比发现，
+    /// 与 ES / 漂移锁链 同一个 bug，只有咬地鲨写对了。
+    /// </para>
+    /// </summary>
     private static float ResolveRedlineRatio(
         ShiftPointLearner learner,
         in ForzaDataPacket packet,
         bool hasPacket,
+        float maxRpm,
+        float spanRpm,
         bool useLearnedRedline)
     {
-        if (!hasPacket || !useLearnedRedline)
+        if (!hasPacket || !useLearnedRedline || spanRpm <= 1f)
         {
             return 0.75f;
         }
 
-        return (float)Math.Clamp(learner.GetRedlineRatio(packet), 0.5, 1.0);
+        double ratio = Math.Clamp(learner.GetRedlineRatio(packet), 0.5, 1.0);
+        return Math.Clamp((float)ratio * maxRpm, 0f, spanRpm) / spanRpm;
     }
 
     /// <summary>换挡闪光推进：档位变化时置 1，之后按原型速率衰减。</summary>

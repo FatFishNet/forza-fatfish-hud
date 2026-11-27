@@ -54,6 +54,12 @@ public static class PerformanceMonitor
     public static double SystemGpuPercent { get; private set; }
 
     /// <summary>
+    /// 当前是否有人在看 GPU / 显存读数。性能日志的整机 GPU 采样据此门控 ——
+    /// 没人看的数字不该每 10 秒烧掉 77 MB 分配。
+    /// </summary>
+    public static bool GpuReadingsNeeded => _gpuReadingsNeeded;
+
+    /// <summary>
     /// 由调用方在设置变化时告知「现在有没有人看 GPU / 显存读数」。
     /// HUD 的资源面板、设置页的运行日志页、性能日志开关，任一为真就需要。
     /// </summary>
@@ -71,11 +77,14 @@ public static class PerformanceMonitor
         {
             DisposeCounters(GpuCounters);
             DisposeCounters(VramCounters);
+            DisposeCounters(SystemGpuCounters);
             _gpuInstanceNames = [];
             _vramInstanceNames = [];
+            _systemGpuInstanceNames = [];
             _lastInstanceScanTick = long.MinValue / 2;
             GpuPercent = 0;
             VramMb = 0;
+            SystemGpuPercent = 0;
         }
     }
 
@@ -175,9 +184,16 @@ public static class PerformanceMonitor
 
     private static string[] _systemGpuInstanceNames = [];
 
-    /// <summary>供 PerfRecorder 的后台结算线程每 2 秒调用一次；PDH 枚举开销大，不能放在渲染线程。</summary>
+    /// <summary>供 PerfRecorder 的后台结算线程调用；PDH 枚举开销大，不能放在渲染线程。</summary>
     public static double CaptureSystemGpu()
     {
+        // 门控：整机 GPU 只有性能日志 + 运行日志页会看。没人看时直接返回上次的值，
+        // 不能白烧 —— 一次重扫要遍历全部 GPU Engine 实例，实测 77 MB 分配。
+        if (!_gpuReadingsNeeded)
+        {
+            return SystemGpuPercent;
+        }
+
         RefreshSystemGpu();
         return SystemGpuPercent;
     }

@@ -32,7 +32,7 @@
     },
     {
       "path": "AGENTS.md",
-      "lines": 279, "bytes": 21600, "sha256": "6ebb3e07c867be4a7536ea5e2356c71295b67c9f942d702bd0f766655bf58347"
+      "lines": 312, "bytes": 25009, "sha256": "acd509aef62bc9667b5c3c7afa10dffad63b3efbdd5141de794121cd3a7aa5e2"
     },
     {
       "path": "app-dist-template/config/\u914d\u7f6e\u6587\u4ef6\u8bf4\u660e.txt",
@@ -184,13 +184,11 @@
     },
     {
       "path": "src/ForzaOverlay.App/Rendering/DriftChainScene.cs",
-      "lines": 1027, "bytes": 41334, "sha256": "0ce39faef2c44b090289019b84157be420aa9fbce42d53392140c855d609072a"
+      "lines": 1040, "bytes": 42153, "sha256": "c962f697b6a75ccf7fd169a134d714000c3974bebe80002b9ba6ee00f714db76"
     },
     {
       "path": "src/ForzaOverlay.App/Rendering/EsScene.cs",
-      "lines": 1068,
-      "bytes": 45288,
-      "sha256": "dba33b5b8a892e407d73907f7a3182e17602d81d96b40d18f3ec2f4ca21a34c8"
+      "lines": 1073, "bytes": 45769, "sha256": "116a21a7f4a1c69612061177ab57de37ea01bf7fb2db304357b5ba1c5f24b08f"
     },
     {
       "path": "src/ForzaOverlay.App/Rendering/GhostPanel.cs",
@@ -230,9 +228,7 @@
     },
     {
       "path": "src/ForzaOverlay.App/Rendering/RingScene.cs",
-      "lines": 815,
-      "bytes": 32570,
-      "sha256": "8c5a5eedac1014f626a95c3398e19be74c673be25a442e1de00cb554a7c6618e"
+      "lines": 827, "bytes": 33288, "sha256": "f7827ee0d7267c8284c54281834674e8bef868ddaf34acfdd3598cded585e038"
     },
     {
       "path": "src/ForzaOverlay.App/Rendering/ShiftTreePanel.cs",
@@ -276,7 +272,7 @@
     },
     {
       "path": "src/ForzaOverlay.App/Services/PerformanceMonitor.cs",
-      "lines": 264, "bytes": 8937, "sha256": "de5af36e73deeb8ed723d9c49cca4f50276db12768b46c705076718a8eba9464"
+      "lines": 280, "bytes": 9628, "sha256": "6d281b4f1fcc820db8548064ecd4ac89c15a2c9b7816fb34445118693cd1a4da"
     },
     {
       "path": "src/ForzaOverlay.App/Services/ProcessPrivilege.cs",
@@ -410,9 +406,7 @@
     },
     {
       "path": "src/ForzaOverlay.Core/Diagnostics/PerfRecorder.cs",
-      "lines": 811,
-      "bytes": 23700,
-      "sha256": "5fe21b497becf172d6b8bce31bab963641baaae65fa030b28b6ab39822a08582"
+      "lines": 822, "bytes": 24548, "sha256": "64a6526cd5d247a2b72b2a5178147a241c13837c8552e2cf53ca610773d9a7f9"
     },
     {
       "path": "src/ForzaOverlay.Core/ForzaOverlay.Core.csproj",
@@ -422,7 +416,7 @@
     },
     {
       "path": "src/ForzaOverlay.Core/Learning/ShiftPointLearner.cs",
-      "lines": 887, "bytes": 36152, "sha256": "108dbc4b20575685f29c1f14183f62c2c7b4a812d1e1907b3136583ef76e0089"
+      "lines": 904, "bytes": 38035, "sha256": "75ef919055e95745051aa865a9651c9ebed4f1f98b0f23f946f34ba5b1fa3b15"
     },
     {
       "path": "src/ForzaOverlay.Core/Monitoring/ForzaGameKind.cs",

@@ -108,34 +108,33 @@ public sealed class ShiftPointLearner
     /// 用全历史中位数会被陈旧样本锚死，学错了就永远纠正不过来（2026-11-21 用户反馈）。
     /// </summary>
     private const int RecentCutSampleCount = 3;
-    private const int MaxShiftSamplesPerGear = 5;
-    private const int MaxShiftSamples = 60;
+
+    /// <summary>
+    /// 升挡样本池只保留**全局最近这么多次换挡**，不分档位。
+    /// <para>
+    /// **不要按档位设上限**（2026-11-28 用户拍板改掉旧的 `MaxShiftSamplesPerGear = 5`）：
+    /// 一辆车跑起来后根本落不到低档 —— 实测 955 条历史样本里，1~3 档占 48.4%，
+    /// 而 7~10 档只占 15.9%；单场会话里 9→10 档常常只有 3 次。
+    /// 按档位配额会让低档位迅速占满、高档位长期只有 1~2 条，
+    /// 而「最近 3 条」一旦被低档位样本占住，红区就跟着当前跑的档位来回跳。
+    /// </para>
+    /// <para>
+    /// 改成全局按时间滚动：谁新谁留，自然反映「你最近怎么开」。
+    /// 用户定的数字是 **10** —— 一场比赛换挡约 140 次，10 条 ≈ 最近的 7%，
+    /// 既够稳定、又能在换调校后快速把旧样本挤掉。
+    /// </para>
+    /// </summary>
+    private const int MaxShiftSamples = 10;
+
     private const int SaveIntervalMs = 5000;
 
-    /// <summary>
-    /// 升挡样本入库前允许偏离已有中位数的比例。
-    /// <para>
-    /// **不能用「档位静止时长」来挡假样本**：10 速变速箱 1 秒内可以连升 4~5 档，
-    /// 每档只停留 200~250 ms，任何时长门槛都会把这类正常升挡整个排除掉
-    /// （实测历史日志里最快一次连升是 405 ms，仍远低于常见的 300ms 门槛假设）。
-    /// </para>
-    /// <para>
-    /// 改用**数据自洽性**：正常车的升挡点极差一般 &lt;2%，偏离主群 3% 以上的基本都是
-    /// 假样本 —— 跨档降档后紧接回位（car 1124：`5→3` 把转速拖到 6982，34ms 后 `3→4`
-    /// 被记成升挡）、驱动轮打滑抬转速等。这类样本连 2 条就能把「最近 3 条」的中位数
-    /// 抬过真实换挡点，红区整段跑到换挡点之后，表现为「自动挡永远摸不到红区」。
-    /// </para>
-    /// </summary>
-    private const double ShiftOutlierTolerance = 0.03;
-
-    /// <summary>已有样本少于这个数时不做偏离判断（样本太少，中位数本身不可靠）。</summary>
-    private const int ShiftOutlierMinSamples = 3;
-
-    /// <summary>
-    /// 连续这么多次偏离旧中位数 → 判定为「换调校 / 换车」而不是脏数据，
-    /// 清空旧样本用新样本重建。与 <see cref="CutRelearnDeviationCount"/> 同一套路子。
-    /// </summary>
-    private const int ShiftRelearnDeviationCount = 5;
+    // 2026-11-28 移除：升挡样本的「偏离过滤」整套逻辑（ShiftOutlierTolerance /
+    // ShiftOutlierMinSamples / ShiftRelearnDeviationCount）。
+    // 用户拍板不做偏离检测、不做主导簇 —— 换调校常常只是改换挡逻辑、共用同一款发动机，
+    // 换挡转速差得很小，判不出来；而且真换调校时也很可能是「转速差很小」那种，
+    // 硬判反而会误伤。改成纯粹按时间滚动：新样本进来，最老的自动被挤掉，
+    // 不需要任何「是否换调校」的判断。
+    // ShiftPointProfile.ShiftDeviationCount 字段保留，只为兼容已落盘的旧 json。
 
     private sealed class GearShiftSample
     {
@@ -164,9 +163,8 @@ public sealed class ShiftPointLearner
         public int MaxGearSeen { get; set; }
 
         /// <summary>
-        /// 升挡样本连续偏离旧中位数的次数。
-        /// 连续 <see cref="ShiftRelearnDeviationCount"/> 次 → 判定换调校/换车，清空重建。
-        /// 落盘保存，重启后不丢。
+        /// 旧版本「升挡样本偏离计数」的残留字段，**已不再使用**。
+        /// 2026-11-28 移除偏离过滤后它没有写入方了，但保留声明以免旧 json 反序列化时丢字段。
         /// </summary>
         public int ShiftDeviationCount { get; set; }
 
@@ -190,6 +188,23 @@ public sealed class ShiftPointLearner
     private double _lastThrottle;
     private double _lastSteer;
     private double _lastSlip;
+
+    /// <summary>
+    /// 最近 <see cref="SteerHistoryMs"/> 内的「转向绝对值峰值」。
+    /// <para>
+    /// 升档那一帧的转向**不可信**：自动挡在弯中会压住不升档，等回直线才升 ——
+    /// 此刻 `SteerNormalized` 已经回正，只看着这一帧会把「弯中积压后补升」当成干净样本。
+    /// （2026-11-28 用户实测描述，正是 3960 红区忽高忽低、越玩越小的怀疑来源。）
+    /// </para>
+    /// <para>
+    /// 所以记录升档**之前**这段时间内转向到过的最大绝对值，用来事后把样本按工况分流。
+    /// 这是一条纯诊断量：只写日志、不参与任何判断，拿到数据再决定算法怎么改。
+    /// </para>
+    /// </summary>
+    private readonly Queue<(double AbsSteer, long Tick)> _steerHistory = new();
+
+    /// <summary>转向历史窗口长度。1 秒足够覆盖「弯中压档 → 回正 → 升档」的间隔。</summary>
+    private const int SteerHistoryMs = 1000;
 
     public ShiftPointLearner(string storageDirectory)
     {
@@ -225,6 +240,13 @@ public sealed class ShiftPointLearner
         }
 
         _lastUpdateTick = tickMs;
+
+        // 转向历史：只为诊断升档工况，不参与判断（见 _steerHistory 注释）。
+        _steerHistory.Enqueue((Math.Abs(packet.SteerNormalized), tickMs));
+        while (_steerHistory.Count > 0 && tickMs - _steerHistory.Peek().Tick > SteerHistoryMs)
+        {
+            _steerHistory.Dequeue();
+        }
 
         lock (_gate)
         {
@@ -752,7 +774,19 @@ public sealed class ShiftPointLearner
             return;
         }
 
-        Diagnostics.Write($"[换挡学习] 记录 {_lastGear}->{gear}: 转速={_lastRpm:F0}");
+        // 诊断：把升档前一秒内转向到过的峰值一并写出来。
+        // 升档那一帧转向已回正时，靠这个字段才能看出「这次是弯中压档后补升」。
+        double peakSteer = 0;
+        foreach ((double AbsSteer, long Tick) entry in _steerHistory)
+        {
+            if (entry.AbsSteer > peakSteer)
+            {
+                peakSteer = entry.AbsSteer;
+            }
+        }
+
+        Diagnostics.Write(
+            $"[换挡学习] 记录 {_lastGear}->{gear}: 转速={_lastRpm:F0} 转向={_lastSteer:F2} 转向峰={peakSteer:F2} 油门={_lastThrottle:F2} 滑移={_lastSlip:F2}");
         AddShiftSample(profile, _lastGear, _lastRpm);
     }
 
@@ -776,44 +810,14 @@ public sealed class ShiftPointLearner
             return;
         }
 
-        List<GearShiftSample> sameGear = profile.Shifts.FindAll(sample => sample.Gear == gear);
-        if (sameGear.Count >= MaxShiftSamplesPerGear)
-        {
-            return;
-        }
-
-        if (sameGear.Exists(sample => Math.Abs(sample.Rpm - rpm) < 60))
-        {
-            return;
-        }
-
-        // 偏离过滤：样本足够多时，离主群太远的一律不入库。
-        if (profile.Shifts.Count >= ShiftOutlierMinSamples)
-        {
-            double median = Median(profile.Shifts.Select(sample => sample.Rpm).ToList());
-            if (median > 0 && Math.Abs(rpm - median) > median * ShiftOutlierTolerance)
-            {
-                profile.ShiftDeviationCount++;
-
-                // 连续多次偏离 → 不是脏数据，是换了调校 / 换了齿比，旧样本作废重建。
-                if (profile.ShiftDeviationCount >= ShiftRelearnDeviationCount)
-                {
-                    profile.Shifts.Clear();
-                    profile.Shifts.Add(new GearShiftSample { Gear = gear, Rpm = rpm });
-                    profile.ShiftDeviationCount = 0;
-                    Diagnostics.Write($"[换挡学习] 换挡点重建: {rpm:F0} RPM（连续偏离旧中位数 {median:F0}）");
-                    return;
-                }
-
-                Diagnostics.Write(
-                    $"[换挡学习] 丢弃偏离样本 {gear}档={rpm:F0}: 偏离中位 {median:F0} 超过 {ShiftOutlierTolerance * 100:F0}%");
-                return;
-            }
-        }
-
-        profile.ShiftDeviationCount = 0;
+        // 只保留全局最近 MaxShiftSamples 次换挡，不分档位 —— 直接入队、满了踢最老的。
+        // 2026-11-28 删掉两道会让样本永远进不来的闸：
+        //   ① `MaxShiftSamplesPerGear = 5` 的按档配额（低档位占满后高档位再无位置）；
+        //   ② 「同档位 60 转内视为重复」—— 实车同档换挡点极差才 80 转左右，
+        //      这条把正常波动全当成重复丢掉，导致每档永远只有 1 条，
+        //      所谓「每档 5 条」从未生效，「最近 3 条」实际是「3 个档位各 1 条」。
         profile.Shifts.Add(new GearShiftSample { Gear = gear, Rpm = rpm });
-        if (profile.Shifts.Count > MaxShiftSamples)
+        while (profile.Shifts.Count > MaxShiftSamples)
         {
             profile.Shifts.RemoveAt(0);
         }
@@ -828,11 +832,24 @@ public sealed class ShiftPointLearner
         return sum / 4.0;
     }
 
+    /// <summary>
+    /// 车辆档案键。**不含 `EngineIdleRpm`**（2026-11-28 修）。
+    /// <para>
+    /// 怠速是**会漂移的实时读数**，不是车辆身份：冷车启动 / 进出菜单 / 换车瞬间会读到
+    /// 1011 之类的高值，开起来才回落到 800。拿它当键会导致**同一辆车分裂成两个档案** ——
+    /// 实测 car 3886 同时存在 `...|9000|1011|...`（空档案）和 `...|9000|800|...`（有数据），
+    /// 写入时在两者之间来回切换，谁都不完整，表现为「红区忽大忽小、玩久了变小」。
+    /// </para>
+    /// <para>
+    /// 其它字段都是静态属性：`CarOrdinal` 是车辆 ID，`CarClass` / `CarPerformanceIndex` /
+    /// `DrivetrainType` / `NumCylinders` 是车型属性，`EngineMaxRpm` 取整后稳定（8999.995 → 9000）。
+    /// </para>
+    /// </summary>
     private static string BuildKey(in ForzaDataPacket packet)
     {
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"{packet.CarOrdinal}|{packet.CarClass}|{packet.CarPerformanceIndex}|{Math.Round(packet.EngineMaxRpm)}|{Math.Round(packet.EngineIdleRpm)}|{packet.DrivetrainType}|{packet.NumCylinders}");
+            $"{packet.CarOrdinal}|{packet.CarClass}|{packet.CarPerformanceIndex}|{Math.Round(packet.EngineMaxRpm)}|{packet.DrivetrainType}|{packet.NumCylinders}");
     }
 
     private void Load()

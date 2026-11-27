@@ -292,7 +292,7 @@ internal sealed class EsScene : IDisposable
         float top = viewportY + (float)(layout.Y * viewportHeight);
 
         float spanRpm = ResolveTachoSpan(maxRpm);
-        float redlineRpm = ResolveRedline(learner, packet, hasPacket, spanRpm, useLearnedRedline);
+        float redlineRpm = ResolveRedline(learner, packet, hasPacket, maxRpm, spanRpm, useLearnedRedline);
         float redlineRatio = spanRpm > 1f ? Math.Clamp(redlineRpm / spanRpm, 0f, 1f) : 0.75f;
 
         float rpmRatio = hasPacket ? Math.Clamp(packet.CurrentEngineRpm / spanRpm, 0f, 1f) : 0f;
@@ -345,6 +345,7 @@ internal sealed class EsScene : IDisposable
         ShiftPointLearner learner,
         in ForzaDataPacket packet,
         bool hasPacket,
+        float maxRpm,
         float spanRpm,
         bool useLearnedRedline)
     {
@@ -359,8 +360,12 @@ internal sealed class EsScene : IDisposable
             return spanRpm * 0.75f;
         }
 
+        // learner 返回的是**占 maxRpm 的比例**，必须先乘 maxRpm 换成真实转速，再夹到表盘量程 spanRpm。
+        // 曾直接乘 spanRpm（= 千转向上取整），红区整体被抬高约 (span−max)/max，
+        // 表现为「红区起点偏右、红区带比咬地鲨窄」——2026-11-28 用户实机对比发现，
+        // ES / 极简弧环 / 漂移锁链 三个仪表同时中招，只有咬地鲨是对的。
         double ratio = Math.Clamp(learner.GetRedlineRatio(packet), 0.5, 1.0);
-        return Math.Clamp((float)ratio * spanRpm, 0f, spanRpm);
+        return Math.Clamp((float)ratio * maxRpm, 0f, spanRpm);
     }
 
     /// <summary>档位文案：-1→R、0→N、1..10 原样、11 是换挡瞬间，保持上一帧。</summary>

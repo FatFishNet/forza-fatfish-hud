@@ -24,6 +24,14 @@ public static class PerfRecorder
     private const double HitchP50Factor = 3.0;
     private const int QueueCapacity = 8192;
 
+    /// <summary>
+    /// 整机 GPU 采样间隔（秒）。原先 2 秒采一次，但本机 `GPU Engine` 有近 575 个实例，
+    /// 每实例一次 `NextValue()` 实测分配 134 KB —— 一次重扫 77 MB，2 秒一次就是
+    /// **每秒 42 MB、约 150 GB/小时** 的纯浪费（全落在 Gen0，所以工作集看不出涨，
+    /// 但 GC 与 CPU 是实打实在烧）。整机 GPU 只用来判断「是否 GPU 饱和」，10 秒完全够。
+    /// </summary>
+    private const int SystemGpuSampleIntervalSec = 10;
+
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
     private static readonly object StateGate = new();
     private static readonly object WriterGate = new();
@@ -458,12 +466,15 @@ public static class PerfRecorder
             int handles = Self.HandleCount;
             double workingSetMb = Self.WorkingSet64 / 1024.0 / 1024.0;
 
-            // 整机 GPU 走 PDH，开销大，隔一秒采一次，而且只在后台线程采。
+            // 整机 GPU 走 PDH，开销极大：一次重扫要遍历全部 GPU Engine 实例，
+            // 实测单次 NextValue 就分配 134 KB × 近 575 个实例 ≈ 77 MB。
+            // 所以 10 秒采一次就够（这个数字本来就只用来判断「是不是 GPU 饱和」，
+            // 没人会盯着它看秒级抖动），而且只在后台线程采。
             Func<double>? gpuSampler = _systemGpuSampler;
             if (gpuSampler is not null)
             {
                 _samplerTick++;
-                if (_samplerTick % 2 == 1)
+                if (_samplerTick % SystemGpuSampleIntervalSec == 1)
                 {
                     try
                     {
