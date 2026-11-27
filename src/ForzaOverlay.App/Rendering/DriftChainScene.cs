@@ -211,6 +211,19 @@ internal sealed class DriftChainScene : IDisposable
 
     private readonly Dictionary<uint, ID2D1SolidColorBrush> _brushes = [];
 
+    /// <summary>
+    /// 渐变弧**完整段**的几何缓存（48 个槽位，未用到的保持 null）。
+    /// <para>
+    /// 每段的起止角是常量（见 <see cref="DrawValueArc"/>），只有跨越当前转速的
+    /// 那一段才每帧现建。缓存之前每帧建 48 个原生 PathGeometry，
+    /// 2 小时累计约 2300 万个，实测把工作集抬高 73.6MB（2026-11-27）。
+    /// </para>
+    /// </summary>
+    private readonly ID2D1PathGeometry?[] _segmentGeometries = new ID2D1PathGeometry?[GradientSegments];
+
+    /// <summary>缓存所属的 D2D 工厂（记底层 COM 指针，不用包装对象 —— 见 GetSegmentGeometry）。</summary>
+    private IntPtr _segmentFactoryPointer;
+
     private ID2D1StrokeStyle? _roundStroke;
     private ID2D1StrokeStyle? _flatStroke;
 
@@ -435,10 +448,26 @@ internal sealed class DriftChainScene : IDisposable
             float hueAt = (from + to) * 0.5f;
             Color4 color = LerpHsl(GradientStart, GradientEnd, hueAt);
 
-            float a0 = StartAngleDeg + (SweepDeg * from);
-            float a1 = StartAngleDeg + (SweepDeg * to) + RadToDeg(0.006f);
+            // 完整段（to 没有被子句截断）的起止角是常量，几何可以缓存复用；
+            // 只有跨过 rpmRatio 的那 1 段每帧现建 —— 它是唯一随转速变化的段。
+            // 全部现建的话每帧要建 48 个原生 PathGeometry，2 小时就是两千多万个，
+            // 会把 D2D 分配器拖到持续抬高工作集（2026-11-27 实测首轮 +73.6MB）。
+            bool complete = to >= (float)(i + 1) / GradientSegments;
+            ID2D1PathGeometry geometry = complete
+                ? GetSegmentGeometry(target, i)
+                : BuildArcGeometry(
+                    target.Factory,
+                    RadialR,
+                    StartAngleDeg + (SweepDeg * from),
+                    StartAngleDeg + (SweepDeg * to) + RadToDeg(0.006f));
 
-            DrawArc(target, RadialR, a0, a1, color, RadialWidth, stroke);
+            target.DrawGeometry(geometry, GetBrush(target, color), RadialWidth, stroke);
+
+            // 缓存的那段留着；现建的用完必须还掉，否则原生对象泄漏。
+            if (!complete)
+            {
+                geometry.Dispose();
+            }
         }
     }
 
@@ -755,6 +784,20 @@ internal sealed class DriftChainScene : IDisposable
             return;
         }
 
+        using ID2D1PathGeometry geometry = BuildArcGeometry(target.Factory, radius, fromDeg, toDeg);
+        target.DrawGeometry(geometry, GetBrush(target, color), width, stroke);
+    }
+
+    /// <summary>
+    /// 只建几何、不画。抽出来是为了让渐变弧的**完整段**能复用缓存几何
+    /// （它们的起止角是常量，见 <see cref="DrawValueArc"/>）。
+    /// </summary>
+    private static ID2D1PathGeometry BuildArcGeometry(
+        ID2D1Factory factory,
+        float radius,
+        float fromDeg,
+        float toDeg)
+    {
         bool clockwise = toDeg >= fromDeg;
         float span = Math.Abs(toDeg - fromDeg);
         SweepDirection direction = clockwise ? SweepDirection.Clockwise : SweepDirection.CounterClockwise;
@@ -762,7 +805,7 @@ internal sealed class DriftChainScene : IDisposable
         Vector2 start = PointOn(radius, fromDeg);
         Vector2 end = PointOn(radius, toDeg);
 
-        using ID2D1PathGeometry geometry = target.Factory.CreatePathGeometry();
+        ID2D1PathGeometry geometry = factory.CreatePathGeometry();
         using (ID2D1GeometrySink sink = geometry.Open())
         {
             sink.BeginFigure(start, FigureBegin.Hollow);
@@ -778,7 +821,56 @@ internal sealed class DriftChainScene : IDisposable
             sink.Close();
         }
 
-        target.DrawGeometry(geometry, GetBrush(target, color), width, stroke);
+        return geometry;
+    }
+
+    /// <summary>
+    /// 取第 <paramref name="index"/> 段渐变弧的**完整段**几何（角度恒定，可缓存）。
+    /// <para>
+    /// 几何由 <c>ID2D1Factory</c> 创建，是设备无关对象，可以跨渲染帧复用；
+    /// 但工厂一旦换实例（重建 D2D 设备）旧几何就不能再用，所以这里记住工厂的
+    /// **底层 COM 指针**，变了就整批作废重建。
+    /// </para>
+    /// <para>
+    /// ⚠️ 必须比 <see cref="IntPtr"/> 而不是包装对象：`target.Factory` 每次访问都
+    /// 新建一个 COM 包装实例（实测 `ReferenceEquals` 恒为 false，哈希相同、NativePointer 相同），
+    /// 拿包装对象做身份判断会导致缓存每帧被清空重建，等于没缓存
+    /// （2026-11-27 实测：改完分配量一点没降，就是这个原因）。
+    /// </para>
+    /// </summary>
+    private ID2D1PathGeometry GetSegmentGeometry(ID2D1RenderTarget target, int index)
+    {
+        ID2D1Factory factory = target.Factory;
+        IntPtr factoryPointer = factory.NativePointer;
+        if (_segmentFactoryPointer != factoryPointer)
+        {
+            DisposeSegmentGeometries();
+            _segmentFactoryPointer = factoryPointer;
+        }
+
+        ID2D1PathGeometry? cached = _segmentGeometries[index];
+        if (cached is null)
+        {
+            float from = (float)index / GradientSegments;
+            float to = (float)(index + 1) / GradientSegments;
+            cached = BuildArcGeometry(
+                factory,
+                RadialR,
+                StartAngleDeg + (SweepDeg * from),
+                StartAngleDeg + (SweepDeg * to) + RadToDeg(0.006f));
+            _segmentGeometries[index] = cached;
+        }
+
+        return cached;
+    }
+
+    private void DisposeSegmentGeometries()
+    {
+        for (int i = 0; i < _segmentGeometries.Length; i++)
+        {
+            _segmentGeometries[i]?.Dispose();
+            _segmentGeometries[i] = null;
+        }
     }
 
     private ID2D1SolidColorBrush GetBrush(ID2D1RenderTarget target, Color4 color)
@@ -921,6 +1013,9 @@ internal sealed class DriftChainScene : IDisposable
         _boostTextFormat?.Dispose();
         _roundStroke?.Dispose();
         _flatStroke?.Dispose();
+
+        DisposeSegmentGeometries();
+        _segmentFactoryPointer = IntPtr.Zero;
 
         foreach (ID2D1SolidColorBrush brush in _brushes.Values)
         {

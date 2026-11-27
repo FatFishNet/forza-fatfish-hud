@@ -32,7 +32,7 @@
     },
     {
       "path": "AGENTS.md",
-      "lines": 269, "bytes": 20525, "sha256": "e4994d11eaf167d415cdd98586d2c152c1e8c44a6d7483ac8ce240f25d15d575"
+      "lines": 279, "bytes": 21600, "sha256": "6ebb3e07c867be4a7536ea5e2356c71295b67c9f942d702bd0f766655bf58347"
     },
     {
       "path": "app-dist-template/config/\u914d\u7f6e\u6587\u4ef6\u8bf4\u660e.txt",
@@ -90,9 +90,7 @@
     },
     {
       "path": "README.md",
-      "lines": 126,
-      "bytes": 6423,
-      "sha256": "19d90bddbb2f7867341a91f85ae39e51f5575f4745100b3067c3655d381b931d"
+      "lines": 108, "bytes": 5668, "sha256": "fffdc6e86009120534f08d9562ff6df9d15b85890a10b4cd6b6aaa50d6445fc1"
     },
     {
       "path": "src/ForzaOverlay.App/app.manifest",
@@ -186,9 +184,7 @@
     },
     {
       "path": "src/ForzaOverlay.App/Rendering/DriftChainScene.cs",
-      "lines": 932,
-      "bytes": 37157,
-      "sha256": "a76895d79d3d20b263609a854bf404d3a0020df2f7fe987fdc707717a9dfcc3d"
+      "lines": 1027, "bytes": 41334, "sha256": "0ce39faef2c44b090289019b84157be420aa9fbce42d53392140c855d609072a"
     },
     {
       "path": "src/ForzaOverlay.App/Rendering/EsScene.cs",
@@ -246,9 +242,7 @@
     },
     {
       "path": "src/ForzaOverlay.App/Services/AppServices.cs",
-      "lines": 198,
-      "bytes": 5914,
-      "sha256": "c332376b138ee66d9283e92a0eb8e7e841e70289d7447de1075ca1d5cbfe3a27"
+      "lines": 213, "bytes": 6591, "sha256": "0c19c50f1995b85b223f12e8cf32306cb76d5b11c311b5134fe5db51d112e6b8"
     },
     {
       "path": "src/ForzaOverlay.App/Services/AppStartupValidator.cs",
@@ -282,9 +276,7 @@
     },
     {
       "path": "src/ForzaOverlay.App/Services/PerformanceMonitor.cs",
-      "lines": 173,
-      "bytes": 5420,
-      "sha256": "84cdb06f87b9517c4b15b61e4aa6f7c8b6c56a923367ff327f5897f5e042dc32"
+      "lines": 264, "bytes": 8937, "sha256": "de5af36e73deeb8ed723d9c49cca4f50276db12768b46c705076718a8eba9464"
     },
     {
       "path": "src/ForzaOverlay.App/Services/ProcessPrivilege.cs",
@@ -348,9 +340,7 @@
     },
     {
       "path": "src/ForzaOverlay.App/Ui/SettingsWindow.xaml.cs",
-      "lines": 1241,
-      "bytes": 38508,
-      "sha256": "ef9c4023d31a6eae864d198374dc5d4163829b1d1415c36488494493e13f56f9"
+      "lines": 1266, "bytes": 39699, "sha256": "a3670975878564621bb4ccb09331de2a8341c761da3f74b27b4fc2e81be686ca"
     },
     {
       "path": "src/ForzaOverlay.App/Ui/UpdateWindow.xaml",

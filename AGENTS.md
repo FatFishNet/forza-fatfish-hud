@@ -220,6 +220,10 @@ dotnet build .\ForzaOverlay.sln -v minimal -m:1
   热路径禁止 `Diagnostics.Write`（每次调用都开关文件）
 - 判读：帧时间平/包间隔涨 = 游戏侧顿；两者同步涨 = 我们在拖后腿，再看 draw 与 Present；
   `gc2` 与 `gc_pause_ms` 对齐 = GC；`cpu`/`scan_ms` 出现 10 秒节拍尖峰 = 进程扫描或写盘
+- **枚举 GPU 性能计数器非常贵，必须门控 + 缓存**：`new PerformanceCounterCategory(...)`
+  再 `GetInstanceNames()` 每次分配 120 KB（`GPU Engine` 本机近 500 个实例），
+  单个 `NextValue()` 也要 116 KB —— 每秒一次就是 452 MB/小时。
+  实例名只在程序启停时变，按 30 秒节流重扫即可；没人看的数字（面板关、日志关）整段跳过
 - 局限：测不到游戏自身帧时间与 DWM/驱动层，包间隔只是代理；要更细得用 PresentMon 或 WPA
 
 ## 13. tools/ 验证工作流（改绘制代码必须走）
@@ -256,6 +260,12 @@ dotnet run --project tools/snapshot --preset extremes --style altezza --width 10
 - **HTML 原型必须渲染出来比对**（`tools/render.py --shot`），不要只读源码推算几何
 - **D2D 画刷 / 几何缓存禁用 `using`**：`GetXxx(target)` 返回缓存对象，包住会在帧末 Dispose，
   编译不报错、下一帧崩
+- **每帧新建原生几何会抬高工作集**：D2D 的 `PathGeometry` 是 COM 对象，逐帧建-销不算泄漏
+  （句柄不涨），但高频会让分配器碎片化、工作集抬到一档就不回落。分段绘制的稳定段应按
+  角度缓存几何（`ShiftTreePanel._arcCache` 是现成范例），只现建真正随数值变化的那一段
+- **判 COM 包装对象身份要比 `NativePointer`，不能用 `ReferenceEquals`**：`target.Factory`
+  每次访问都新建包装实例（引用不同、`GetHashCode` 与 `NativePointer` 相同）。
+  拿引用判断「工厂换没换」会导致缓存每帧被清空重建，性能一点不改善
 - **SVG → D2D 文字补偿**：`SetCharacterSpacing` 单位与文档不符（咬地鲨 22 号字实测 1 单位 ≈ 0.844px，
   随字号变，改字号要重标）；SVG 的 `y` 是基线而 `CenteredText` 按行高居中，差约半个行高
   （`TachoUnitBaselineFix`）；走旋转矩阵的 `DrawDialText` 不偏

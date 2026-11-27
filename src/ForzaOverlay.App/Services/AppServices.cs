@@ -84,7 +84,22 @@ public static class AppServices
         _settings = settings;
         GlobalHotkeyService.TryApply(settings.HotkeyText);
         ApplyActiveEndpoint();
+        ApplyGpuReadingsGate(settings);
         SettingsApplied?.Invoke(settings);
+    }
+
+    /// <summary>
+    /// 告诉 <see cref="PerformanceMonitor"/> 要不要刷新 GPU / 显存读数。
+    /// <para>
+    /// 枚举 GPU 计数器实例非常贵（实测每秒约 130 KB 分配、452 MB/小时），
+    /// 而这两项数字只有「HUD 资源面板」和「设置页运行日志」会看，
+    /// 加性能日志后台采样会用到。三者都没开时整段跳过。
+    /// </para>
+    /// </summary>
+    private static void ApplyGpuReadingsGate(AppSettings settings)
+    {
+        bool needed = settings.ShowPerfPanel || settings.PerfLogEnabled;
+        PerformanceMonitor.SetGpuReadingsNeeded(needed);
     }
 
     public static void SuspendHotkey()

@@ -130,6 +130,7 @@ public partial class SettingsWindow : Window
         UpdateDerivedRatio();
 
         UpdateNavSelection(NavTelemetryButton);
+        UpdateGpuReadingsGate();
         InitAboutPage();
 
         _logTimer = new DispatcherTimer(DispatcherPriority.Background)
@@ -206,6 +207,20 @@ public partial class SettingsWindow : Window
 
     }
 
+    /// <summary>
+    /// 设置页这边是否需要 GPU / 显存读数：只有「运行日志」页可见时要。
+    /// 与 <see cref="AppServices.ApplySettings"/> 里的判断取或，两边任一需要就刷新。
+    /// </summary>
+    private void UpdateGpuReadingsGate()
+    {
+        bool settingsPageNeeds = PageLog.Visibility == Visibility.Visible
+            && WindowState != WindowState.Minimized
+            && IsVisible;
+
+        bool hudNeeds = _settings.ShowPerfPanel || _settings.PerfLogEnabled;
+        PerformanceMonitor.SetGpuReadingsNeeded(hudNeeds || settingsPageNeeds);
+    }
+
     private void UpdatePerfReadout()
     {
         double fps = PerformanceMonitor.Fps;
@@ -237,6 +252,9 @@ public partial class SettingsWindow : Window
         DpiScale dpi = VisualTreeHelper.GetDpi(this);
         Width = FixedWidthPixels / dpi.DpiScaleX;
         Height = FixedHeightPixels / dpi.DpiScaleY;
+
+        // 最小化 / 还原时重新判断要不要刷新 GPU 读数（最小化没人看，可以停掉）。
+        StateChanged += (_, _) => UpdateGpuReadingsGate();
     }
 
     private const int GwlStyle = -16;
@@ -295,6 +313,10 @@ public partial class SettingsWindow : Window
         {
             UpdateLogView();
         }
+
+        // 性能读数只在「运行日志」页显示；切走之后 GPU/显存计数器不再需要刷新，
+        // 让 PerformanceMonitor 把这段最贵的枚举省掉（约 130 KB/秒）。
+        UpdateGpuReadingsGate();
 
         UpdateNavSelection(button);
     }
@@ -1196,6 +1218,9 @@ public partial class SettingsWindow : Window
     {
         SettingsStore.Save(_settings);
         AppServices.ApplySettings(_settings);
+
+        // ApplySettings 只按「HUD 面板 / 性能日志」判断，设置页自身可见性要补一次。
+        UpdateGpuReadingsGate();
     }
 
     private static string FormatPort(int port)

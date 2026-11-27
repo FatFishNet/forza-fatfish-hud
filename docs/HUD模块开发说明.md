@@ -641,6 +641,35 @@ ring(..., `hsl(${hue},90%,64%)`, "butt");
 - 色相按**整段中点**取（不是起点），否则尾段会偏紫
 - 用 `butt` 端帽而不是 `round`，否则每段两端会鼓出来
 
+### 渐变弧必须缓存完整段几何（性能）
+
+逐段画有个代价：**每帧要新建 48 个 `ID2D1PathGeometry`**。实测 2 小时会创建约
+2345 万个原生几何对象，把 D2D 分配器拖到持续抬高工作集（2026-11-27 实测首轮 +73.6MB）。
+
+但仔细看 `to = Math.Min((i + 1) / 48, rpmRatio)`：
+
+- **只有跨过当前 `rpmRatio` 的那 1 段**，`to` 才会被截断成连续值
+- 其余 0~47 段的 `to` 恒为 `(i + 1) / 48`，**起止角是常量**
+
+所以完整段可以缓存，末段仍每帧现建精确截断即可 —— 这就是方案 C：
+
+```csharp
+bool complete = to >= (float)(i + 1) / GradientSegments;
+ID2D1PathGeometry geometry = complete
+    ? GetSegmentGeometry(target, i)                       // 48 个槽位的缓存
+    : BuildArcGeometry(target.Factory, RadialR, a0, a1);  // 只有末段现建
+target.DrawGeometry(geometry, GetBrush(target, color), RadialWidth, stroke);
+if (!complete) geometry.Dispose();                        // 缓存的留着，现建的必须还
+```
+
+效果：几何创建 51 → **4 个/帧**（−92%），分配 3053 → **1435 B/帧**（−53%），
+首轮工作集 +73.6 → **+34.0MB**。4 个量程逐像素比对 **0 差异**。
+
+**⚠️ 判断工厂是否换了实例，必须比 `NativePointer`，不能用 `ReferenceEquals`。**
+`target.Factory` **每次访问都会新建一个 COM 包装对象**（实测：`ReferenceEquals` 恒 false，
+但 `GetHashCode` 与 `NativePointer` 相同）。用引用做身份判断会让缓存每帧被清空重建，
+分配量一点不降 —— 第一版就是这么踩的。
+
 ### 红区用斜纹，不是改色
 
 从红区起点到 270° 末端，每 **0.035 弧度**画一根短横线，跨在主弧两侧（`R ± 9`），
