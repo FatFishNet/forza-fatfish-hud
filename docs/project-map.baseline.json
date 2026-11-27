@@ -90,7 +90,7 @@
     },
     {
       "path": "README.md",
-      "lines": 108, "bytes": 5668, "sha256": "fffdc6e86009120534f08d9562ff6df9d15b85890a10b4cd6b6aaa50d6445fc1"
+      "lines": 122, "bytes": 6550, "sha256": "7aed17973f5791a2dc73722a86424537d9682e20847557f57766f8d2dc8fdcc8"
     },
     {
       "path": "src/ForzaOverlay.App/app.manifest",
@@ -160,9 +160,7 @@
     },
     {
       "path": "src/ForzaOverlay.App/ForzaOverlay.App.csproj",
-      "lines": 52,
-      "bytes": 2494,
-      "sha256": "305465d6865b0684ca923f685e02774f119cae5b17aaaa761b42867432f91d18"
+      "lines": 52, "bytes": 2494, "sha256": "f5826efb0ba41fec23a6c331b3dbfb0335dca5722f4df4d716fed4964d6d290a"
     },
     {
       "path": "src/ForzaOverlay.App/Rendering/AltezzaGlyphCache.cs",

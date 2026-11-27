@@ -7,7 +7,7 @@
     <AssemblyName>ForzaFatFishHUD</AssemblyName>
     <Product>Forza Fat Fish HUD</Product>
     <AssemblyTitle>Forza Fat Fish HUD</AssemblyTitle>
-    <Version>1.3.0</Version>
+    <Version>1.2.2</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
